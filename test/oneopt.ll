@@ -25,6 +25,8 @@ define dso_local i32 @main() #0 {
   call void asm sideeffect "bndmk ($0, $1), %bnd0", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %3, i8 0)
   %4 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
   %5 = load void (...)*, void (...)** %4, align 8
+  %6 = bitcast void (...)** %2 to i8*
+  call void asm sideeffect "bndcl ($0), %bnd0", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %6)
   call void (...) %5()
   ret i32 0
 }

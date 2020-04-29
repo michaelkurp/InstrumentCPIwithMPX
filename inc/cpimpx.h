@@ -51,16 +51,16 @@ class CPI : public ModulePass {
   std::map<CallInst* , LoadInst*> CalltoLoad;
   LoadInst* currLoadInst = NULL;
 
-  void getPhiNode(PHINode *);
-  void getFuncPtrArg(Argument *);
-  void getGetElementPtrInst(GetElementPtrInst *);
-  void getCalledInst(CallInst *);
-  void getLoadInst(LoadInst *);
-  void getCallInst(CallInst *);
-  void getFunc(CallInst *);
+  Function* getPhiNode(PHINode *);
+  Function* getFuncPtrArg(Argument *);
+  Function* getGetElementPtrInst(GetElementPtrInst *);
+  Function* getCalledInst(CallInst *);
+  Function* getLoadInst(LoadInst *);
+  Function* getCallInst(CallInst *);
+  Function* getFunc(CallInst *);
 
   void insertBndMk(StoreInst *, int);
-  void insertBndcl(LoadInst *, CallInst *, int);
+  void insertBndcl(StoreInst *, CallInst *, int);
   //void insertBndcu(CallInst *, Function *, int);
   void insertBndldx(StoreInst *, int);
   void insertBndStx(StoreInst *, int);

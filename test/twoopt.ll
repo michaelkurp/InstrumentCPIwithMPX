@@ -38,16 +38,16 @@ define dso_local i32 @main() #0 {
   %10 = load i32 (i32, i32)*, i32 (i32, i32)** %2, align 8
   %11 = load i32, i32* %4, align 4
   %12 = load i32, i32* %5, align 4
-  %13 = bitcast i32 (i32, i32)** %2 to i8*
-  %14 = call i32 %10(i32 %11, i32 %12)
+  %13 = bitcast i32 (i32, i32)** %3 to i8*
   call void asm sideeffect "bndcl ($0), %bnd1", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %13)
+  %14 = call i32 %10(i32 %11, i32 %12)
   store i32 %14, i32* %6, align 4
   %15 = load i32 (i32, i32)*, i32 (i32, i32)** %3, align 8
   %16 = load i32, i32* %4, align 4
   %17 = load i32, i32* %5, align 4
   %18 = bitcast i32 (i32, i32)** %3 to i8*
-  %19 = call i32 %15(i32 %16, i32 %17)
   call void asm sideeffect "bndcl ($0), %bnd1", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %18)
+  %19 = call i32 %15(i32 %16, i32 %17)
   store i32 %19, i32* %7, align 4
   ret i32 0
 }

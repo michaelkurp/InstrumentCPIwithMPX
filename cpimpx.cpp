@@ -1,4 +1,4 @@
-#include "cpimpx.h"
+#include "inc/cpimpx.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -19,6 +19,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
 #include "llvm/PassSupport.h"
@@ -47,39 +48,40 @@ static void initCPIFunctions(const DataLayout *DL, Module &M,
   FunctionCallee temp1 = M.getOrInsertFunction("__cpi__init", voidTy, NULL);
   CF.CPIInit = temp1;
 }
-void CPI::getPhiNode(PHINode *PI) {
+Function* CPI::getPhiNode(PHINode *PI) {
   for (Value *inc : PI->incoming_values()) {
     if (Function *func = dyn_cast<Function>(inc))
-      _call_list.insert(func);
+      return func;
     else if (PI = dyn_cast<PHINode>(inc))
-      getPhiNode(PI);
+      return getPhiNode(PI);
     else if (Argument *arg = dyn_cast<Argument>(inc))
-      getFuncPtrArg(arg);
+      return getFuncPtrArg(arg);
   }
+  return nullptr;
 }
 
-void CPI::getFuncPtrArg(Argument *arg) {
+Function* CPI::getFuncPtrArg(Argument *arg) {
   unsigned index = arg->getArgNo();
   Function *caller = arg->getParent();
   for (auto U : caller->users()) {
     if (CallInst *CI = dyn_cast<CallInst>(U)) {
       Value *v = CI->getArgOperand(index);
       if (Function *func = dyn_cast<Function>(v)) {
-        _call_list.insert(v);
+        return func;
       } else if (PHINode *PN = dyn_cast<PHINode>(v)) {
         for (auto *U : PN->users()) {
           if (CallInst *CI = dyn_cast<CallInst>(U)) {
             Value *vall = CI->getArgOperand(index);
             if (Function *func = dyn_cast<Function>(vall)) {
-              _call_list.insert(v);
+              return func;
             }
           }
         }
-        getPhiNode(PN);
+        return getPhiNode(PN);
       } else if (LoadInst *LI = dyn_cast<LoadInst>(v))
-        getLoadInst(LI);
+        return getLoadInst(LI);
       else if (Argument *_arg = dyn_cast<Argument>(v))
-        getFuncPtrArg(_arg);
+        return getFuncPtrArg(_arg);
     }
 
     else if (PHINode *PN = dyn_cast<PHINode>(U)) {
@@ -87,11 +89,12 @@ void CPI::getFuncPtrArg(Argument *arg) {
         if (CallInst *CI = dyn_cast<CallInst>(U)) {
           Value *v = CI->getOperand(index);
           if (Function *func = dyn_cast<Function>(v))
-            _call_list.insert(v);
+            return func;
         }
       }
     }
   }
+  return nullptr;
 }
 Function *CPI::createGlobalsReload(Module &M, StringRef N) {
   LLVMContext &C = M.getContext();
@@ -143,7 +146,7 @@ void CPI::insertBndMk(StoreInst *SI, int priority) {
   IRB.CreateCall(mkBound, {ptrOpAsVoidPtr, size});
 }
 
-void CPI::insertBndcl(LoadInst *LI, CallInst* CI, int priority) {
+void CPI::insertBndcl(StoreInst *LI, CallInst* CI, int priority) {
   _DI.numBndCl++;
   std::string bndReg;
   switch (priority) {
@@ -173,7 +176,7 @@ void CPI::insertBndcl(LoadInst *LI, CallInst* CI, int priority) {
 
   auto ckBound = InlineAsm::get(checkTy, "bndcl ($0), " + bndReg,
                                 "r,~{dirflag}, ~{fpsr}, ~{flags}", true);
-  IRB.SetInsertPoint(CI->getNextNode());
+  IRB.SetInsertPoint(CI);
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
 /*
@@ -281,21 +284,26 @@ void CPI::insertBndStx(StoreInst *SI, int priority) {
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr, ptrOpAsVoidPtr});
 }
 
-void CPI::getGetElementPtrInst(GetElementPtrInst *getElementPtrInst) {
+Function* CPI::getGetElementPtrInst(GetElementPtrInst *getElementPtrInst) {
   Value *v = getElementPtrInst->getOperand(0);
   for (auto *U : v->users()) {
     if (GetElementPtrInst *GPI = dyn_cast<GetElementPtrInst>(U)) {
+
       for (auto *UL : GPI->users()) {
         if (StoreInst *SI = dyn_cast<StoreInst>(UL)) {
-          Value *v = SI->getOperand(0);
-          if (Function *func = dyn_cast<Function>(v))
-            _call_list.insert(v);
+
+          Value *v = SI->getOperand(0)->stripPointerCasts();
+          if (Function *func = dyn_cast<Function>(v)){
+
+            return func;
+          }
         }
       }
     }
   }
+  return nullptr;
 }
-void CPI::getCallInst(CallInst *CI) {
+Function* CPI::getCallInst(CallInst *CI) {
   Function *func = CI->getCalledFunction();
   if (func != NULL) {
     for (inst_iterator inst_it = inst_begin(func), inst_ie = inst_end(func);
@@ -303,7 +311,7 @@ void CPI::getCallInst(CallInst *CI) {
       if (ReturnInst *ret = dyn_cast<ReturnInst>(&*inst_it)) {
         Value *v = ret->getReturnValue();
         if (Argument *arg = dyn_cast<Argument>(v))
-          getFuncPtrArg(arg);
+          return getFuncPtrArg(arg);
       }
     }
   } else {
@@ -317,45 +325,63 @@ void CPI::getCallInst(CallInst *CI) {
             if (ReturnInst *ret = dyn_cast<ReturnInst>(&*inst_it)) {
               Value *v = ret->getReturnValue();
               if (Argument *argument = dyn_cast<Argument>(v))
-                getFuncPtrArg(argument);
+              return  getFuncPtrArg(argument);
             }
           }
         }
       }
     }
   }
+  return nullptr;
 }
 
-void CPI::getLoadInst(LoadInst *LI) {
+Function* CPI::getLoadInst(LoadInst *LI) {
   Value *v = LI->getPointerOperand();
   if(AllocaInst* all = dyn_cast<AllocaInst>(v))
     currLoadInst = LI;
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(v)){
+
+    return getGetElementPtrInst(GEP);
+  }
   for (auto *U : v->users()) {
     if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       Value *val = SI->getOperand(0);
-      if (Function *fun = dyn_cast<Function>(val))
-        _call_list.insert(val);
+      if (Function *fun = dyn_cast<Function>(val)){
+
+        return fun;
+      }
       else if (Argument *arg = dyn_cast<Argument>(val))
-        getFuncPtrArg(arg);
+      {
+
+        return getFuncPtrArg(arg);
+      }
       else if (LI = dyn_cast<LoadInst>(val))
-        getLoadInst(LI);
+      {
+        return getLoadInst(LI);
+      }
     }
   }
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(v))
-    getGetElementPtrInst(GEP);
+
+
+  return nullptr;
 }
-void CPI::getFunc(CallInst *callInst) {
+Function* CPI::getFunc(CallInst *callInst) {
   Value *funcptr = callInst->getCalledValue();
 
   if (LoadInst *LI = dyn_cast<LoadInst>(funcptr)) {
-    getLoadInst(LI);
+
+    return getLoadInst(LI);
   } else if (Argument *argument = dyn_cast<Argument>(funcptr)) {
-    getFuncPtrArg(argument);
+
+    return getFuncPtrArg(argument);
   } else if (PHINode *PN = dyn_cast<PHINode>(funcptr)) {
-    getPhiNode(PN);
-  } else if (CallInst *call_inst = dyn_cast<CallInst>(funcptr)) {
-    getCallInst(call_inst);
+    return getPhiNode(PN);
+  } else if (CallInst *callinst = dyn_cast<CallInst>(funcptr)) {
+
+    return getCallInst(callinst);
   }
+  else
+    return nullptr;
 }
 bool CPI::runOnFunction(Function &F) {
   LLVMContext &C = F.getContext();
@@ -392,26 +418,15 @@ bool CPI::runOnFunction(Function &F) {
         FunctionType *type = call->getFunctionType();
 
         if (func == NULL) {
-          _BI.needsChecks.insert(call);
-          _call_list.clear();
-          getFunc(call);
-          Function * temp = dyn_cast<Function>( (*(_call_list.begin()))->stripPointerCasts() );
-          if(currLoadInst){
-          callToFunc[call] = temp;
-          CalltoLoad[call] = currLoadInst;
-          currLoadInst = NULL;
-          }
-
-            /*
-            if(callNum.find(temp) != callNum.end())
-            {
-              callNum[temp] = (callNum[temp])++;
+          if(Function * temp = getFunc(call)){
+            _BI.needsChecks.insert(call);
+            callToFunc[call] = temp;
+            if(currLoadInst){
+                callToFunc[call] = temp;
+                CalltoLoad[call] = currLoadInst;
+                currLoadInst = nullptr;
+              }
             }
-            else{
-              callNum[temp] = 0;
-            }
-          }
-          */
         } else if (func->isIntrinsic()) {
 
           continue;
@@ -423,7 +438,9 @@ bool CPI::runOnFunction(Function &F) {
     }
   }
   return true;
+
 }
+
 struct CompareReg {
   bool operator()(std::pair<Function *, int> const& p1, std::pair<Function *, int> const& p2){
     return p1.second < p2.second;
@@ -433,17 +450,17 @@ void CPI::instrumentDaStuff() {
   std::map<Function *, int> funcToReg;
   int regCount = 0;
   for (auto sup : _BI.needsBounds) {
-      //Function *ref = SItoFunc[sup];
+      Function *ref = SItoFunc[sup];
       insertBndMk(sup, regCount % 4);
       Function* temp = SItoFunc[sup];
       funcToReg[temp] = regCount % 4;
       regCount++;
+
   }
   for (auto sup : _BI.needsChecks) {
-      //Function* temp = callToFunc[sup];
-      LoadInst* check = CalltoLoad[sup];
-
+      Function* temp = callToFunc[sup];
       int Reg = funcToReg[callToFunc[sup]];
+      StoreInst* check = FuncToSI[temp];
       insertBndcl(check, sup, Reg);
 
   }
