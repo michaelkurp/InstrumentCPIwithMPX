@@ -448,14 +448,16 @@ struct CompareReg {
 };
 void CPI::instrumentDaStuff() {
   std::map<Function *, int> funcToReg;
-  int regCount = 0;
   for (auto sup : _BI.needsBounds) {
-      Function *ref = SItoFunc[sup];
-      insertBndMk(sup, regCount % 4);
       Function* temp = SItoFunc[sup];
-      funcToReg[temp] = regCount % 4;
-      regCount++;
 
+      int regNum = _RI.returnFirstFreeReg();
+      if(regNum == 42){
+        //ToDO
+      }else{
+        insertBndMk(sup, regNum);
+      }
+      funcToReg[temp] = regNum;
   }
   for (auto sup : _BI.needsChecks) {
       Function* temp = callToFunc[sup];

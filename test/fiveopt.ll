@@ -27,17 +27,13 @@ define dso_local i32 @main() #0 {
   call void asm sideeffect "bndmk ($0, $1), %bnd0", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %4, i8 0)
   %5 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %6 = load void (...)*, void (...)** %5, align 8
-  %7 = bitcast void (...)** %3 to i8*
-  call void asm sideeffect "bndcl ($0), %bnd0", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %7)
   call void (...) %6()
-  %8 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
-  %9 = getelementptr inbounds [10 x i8], [10 x i8]* %8, i64 0, i64 0
-  %10 = call i32 (i8*, ...) bitcast (i32 (...)* @gets to i32 (i8*, ...)*)(i8* %9)
-  %11 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
-  %12 = load void (...)*, void (...)** %11, align 8
-  %13 = bitcast void (...)** %3 to i8*
-  call void asm sideeffect "bndcl ($0), %bnd0", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %13)
-  call void (...) %12()
+  %7 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
+  %8 = getelementptr inbounds [10 x i8], [10 x i8]* %7, i64 0, i64 0
+  %9 = call i32 (i8*, ...) bitcast (i32 (...)* @gets to i32 (i8*, ...)*)(i8* %8)
+  %10 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
+  %11 = load void (...)*, void (...)** %10, align 8
+  call void (...) %11()
   ret i32 0
 }
 

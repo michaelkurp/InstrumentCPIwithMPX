@@ -32,12 +32,61 @@ struct debugInfo {
   int numBndLdx = 0;
   int numBndStx = 0;
 };
+class regInfo {
+public:
+  bool bnd0_reg = true;
+  bool bnd1_reg = true;
+  bool bnd2_reg = true;
+  bool bnd3_reg = true;
+  void freeReg(int regNum)
+  {
+    assert(regNum > -1 && regNum < 4);
+    switch(regNum)
+    {
+      case 0:
+        bnd0_reg = true;
+      break;
+      case 1:
+        bnd1_reg = true;
+      break;
+      case 2:
+        bnd2_reg = true;
+      break;
+      case 3:
+        bnd3_reg = true;
+      break;
+    }
+  }
+  int returnFirstFreeReg()
+  {
+    if(bnd0_reg){
+      bnd0_reg = false;
+      return 0;
+    }
+    else if(bnd1_reg){
+      bnd1_reg = false;
+      return 1;
+    }
+    else if(bnd2_reg){
+      bnd2_reg = false;
+      return 2;
+    }
+    else if(bnd3_reg){
+      bnd3_reg = false;
+      return 3;
+    }
+    else{
+      return 42;
+    }
+  }
+};
 
 class CPI : public ModulePass {
   const DataLayout *DL;
   TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
 
+  regInfo _RI;
   CPIFunctions _CF;
   boundsInfo _BI;
   debugInfo _DI;
