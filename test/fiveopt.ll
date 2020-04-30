@@ -24,7 +24,7 @@ define dso_local i32 @main() #0 {
   %3 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %4 = bitcast void (...)** %3 to i8*
   store void (...)* bitcast (void ()* @hello to void (...)*), void (...)** %3, align 8
-  call void asm sideeffect "bndmk ($0, $1), %bnd0", "r,~{dirflag}, ~{fpsr}, ~{flags}"(i8* %4, i8 0)
+  call void asm sideeffect "bndmk (%rax, $1), %bnd0", "r"(i8* %4, i8 0)
   %5 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %6 = load void (...)*, void (...)** %5, align 8
   call void (...) %6()

@@ -2,7 +2,7 @@ LLVM_ROOT=~/llvm
 LLVM_PASS_LOC=$(LLVM_ROOT)/build/lib/LLVMLab.so
 LLVM_PASS=-cpi
 
-all: one two three four
+all: one two three four five
 
 one: one.c $(LLVM_PASS_LOC)
 	$(LLVM_ROOT)/build/bin/clang -c -emit-llvm one.c
@@ -40,9 +40,9 @@ five: five.c $(LLVM_PASS_LOC)
 	$(LLVM_ROOT)/build/bin/clang -c -emit-llvm five.c
 	$(LLVM_ROOT)/build/bin/opt -p -load $(LLVM_PASS_LOC) $(LLVM_PASS) < five.bc > fiveopt.bc
 	$(LLVM_ROOT)/build/bin/llvm-dis fiveopt.bc
-	$(LLVM_ROOT)/build/bin/llc fiveopt.bc
+	$(LLVM_ROOT)/build/bin/llc --debug-entry-values fiveopt.bc
 	$(LLVM_ROOT)/build/bin/clang -c ../inc/hook.c
 	$(LLVM_ROOT)/build/bin/clang -o five fiveopt.s hook.o
 
 clean:
-	rm -f *.bc *.ll *.s one two three four
+	rm -f *.bc *.ll *.s one two three four five

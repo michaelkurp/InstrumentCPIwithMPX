@@ -1,3 +1,4 @@
+
 #include "inc/cpimpx.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -140,8 +141,8 @@ void CPI::insertBndMk(StoreInst *SI, int priority) {
       {Type::getInt8PtrTy(SI->getContext()), Type::getInt8Ty(SI->getContext())},
       false);
 
-  auto mkBound = InlineAsm::get(checkTy, "bndmk ($0, $1), " + bndReg,
-                                "r,~{dirflag}, ~{fpsr}, ~{flags}", true);
+  auto mkBound = InlineAsm::get(checkTy, "bndmk (%rax, $1), " + bndReg,
+                                "r", true);
   IRB.SetInsertPoint(SI->getNextNode());
   IRB.CreateCall(mkBound, {ptrOpAsVoidPtr, size});
 }
@@ -455,7 +456,7 @@ void CPI::instrumentDaStuff() {
       if(regNum == 42){
         //ToDO
       }else{
-        insertBndMk(sup, regNum);
+       insertBndMk(sup, regNum);
       }
       funcToReg[temp] = regNum;
   }
@@ -463,7 +464,7 @@ void CPI::instrumentDaStuff() {
       Function* temp = callToFunc[sup];
       int Reg = funcToReg[callToFunc[sup]];
       StoreInst* check = FuncToSI[temp];
-      insertBndcl(check, sup, Reg);
+     // insertBndcl(check, sup, Reg);
 
   }
 }
