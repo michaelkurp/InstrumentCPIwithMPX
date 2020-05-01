@@ -202,7 +202,7 @@ void CPI::insertBndcu(StoreInst *LI, CallInst* CI, int priority) {
   }
 
   IRBuilder<> IRB(CI);
-  auto function = callToFunc[CI];
+  auto function = getFunc(CI);
   auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
   auto ptrOpAsVoidPtr =
       IRB.CreateBitCast(function, Type::getInt8PtrTy(CI->getContext()), "");
