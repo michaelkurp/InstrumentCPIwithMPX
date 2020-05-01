@@ -110,7 +110,7 @@ class CPI : public ModulePass {
 
   void insertBndMk(StoreInst *, int);
   void insertBndcl(StoreInst *, CallInst *, int);
-  //void insertBndcu(CallInst *, Function *, int);
+  void insertBndcu(CallInst *, Function *, int);
   void insertBndldx(StoreInst *, int);
   void insertBndStx(StoreInst *, int);
 

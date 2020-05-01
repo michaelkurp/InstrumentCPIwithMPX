@@ -181,7 +181,7 @@ void CPI::insertBndcl(StoreInst *LI, CallInst* CI, int priority) {
   IRB.SetInsertPoint(CI);
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
-/*
+
 void CPI::insertBndcu(CallInst *CI, Function *func, int priority) {
   _DI.numBndCu++;
   std::string bndReg;
@@ -202,19 +202,20 @@ void CPI::insertBndcu(CallInst *CI, Function *func, int priority) {
   }
 
   IRBuilder<> IRB(CI);
-  auto ptrOP = SI->getPointerOperand();
-  auto *size = ConstantInt::get(Type::getInt8Ty(SI->getContext()), priority);
+  auto function = callToFunc[CI];
+  auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
   auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(SI->getContext()), "");
+      IRB.CreateBitCast(function, Type::getInt8PtrTy(CI->getContext()), "");
   auto checkTy =
-      FunctionType::get(Type::getVoidTy(SI->getContext()),
-                        {Type::getInt8PtrTy(SI->getContext())}, false);
+      FunctionType::get(Type::getVoidTy(CI->getContext()),
+                        {Type::getInt8PtrTy(CI->getContext())}, false);
 
-  auto ckBound = InlineAsm::get(checkTy, "bndcu ($0), " + bndReg,
-                                "r,~{dirflag}, ~{fpsr}, ~{flags}", true);
-  IRB.SetInsertPoint(SI->getNextNode());
+  auto ckBound = InlineAsm::get(checkTy, "bndcu 1($0), " + bndReg,
+                      "r", true);
+  IRB.SetInsertPoint(CI);
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
+/*
 void CPI::insertBndldx(StoreInst *SI, int priority) {
   _DI.numBndLdx++;
 
