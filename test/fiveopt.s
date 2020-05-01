@@ -1,9 +1,27 @@
 	.text
 	.file	"five.c"
-	.globl	hello                   # -- Begin function hello
+	.globl	breakme                 # -- Begin function breakme
 	.p2align	4, 0x90
-	.type	hello,@function
-hello:                                  # @hello
+	.type	breakme,@function
+breakme:                                # @breakme
+	.cfi_startproc
+# %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
+	retq
+.Lfunc_end0:
+	.size	breakme, .Lfunc_end0-breakme
+	.cfi_endproc
+                                        # -- End function
+	.globl	pwn                     # -- Begin function pwn
+	.p2align	4, 0x90
+	.type	pwn,@function
+pwn:                                    # @pwn
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -17,8 +35,29 @@ hello:                                  # @hello
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
-.Lfunc_end0:
-	.size	hello, .Lfunc_end0-hello
+.Lfunc_end1:
+	.size	pwn, .Lfunc_end1-pwn
+	.cfi_endproc
+                                        # -- End function
+	.globl	hello                   # -- Begin function hello
+	.p2align	4, 0x90
+	.type	hello,@function
+hello:                                  # @hello
+	.cfi_startproc
+# %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	movabsq	$.L.str.1, %rdi
+	movb	$0, %al
+	callq	printf
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
+	retq
+.Lfunc_end2:
+	.size	hello, .Lfunc_end2-hello
 	.cfi_endproc
                                         # -- End function
 	.globl	main                    # -- Begin function main
@@ -33,27 +72,36 @@ main:                                   # @main
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
 	subq	$32, %rsp
+	movl	$0, -20(%rbp)
+	callq	breakme
 	movabsq	$hello, %rax
-	movl	$0, -4(%rbp)
-	movq	%rax, -16(%rbp)
+	movq	%rax, -8(%rbp)
 	movl	$hello, %eax
 	#APP
 	bndmk	1(%rax), %bnd0
 	#NO_APP
-	movq	-16(%rbp), %rcx
+	movq	-8(%rbp), %rcx
 	movl	$hello, %eax
 	#APP
 	bndcl	1(%rax), %bnd0
 	#NO_APP
+	movl	$hello, %eax
+	#APP
+	bndcu	1(%rax), %bnd0
+	#NO_APP
 	movb	$0, %al
 	callq	*%rcx
-	leaq	-32(%rbp), %rdi
+	leaq	-16(%rbp), %rdi
 	movb	$0, %al
 	callq	gets
-	movq	-16(%rbp), %rcx
+	movq	-8(%rbp), %rcx
 	movl	$hello, %eax
 	#APP
 	bndcl	1(%rax), %bnd0
+	#NO_APP
+	movl	$hello, %eax
+	#APP
+	bndcu	1(%rax), %bnd0
 	#NO_APP
 	movb	$0, %al
 	callq	*%rcx
@@ -62,8 +110,8 @@ main:                                   # @main
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
-.Lfunc_end1:
-	.size	main, .Lfunc_end1-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 	.cfi_endproc
                                         # -- End function
 	.p2align	4, 0x90         # -- Begin function __cpi__init.module
@@ -77,15 +125,20 @@ __cpi__init.module:                     # @__cpi__init.module
 	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
-.Lfunc_end2:
-	.size	__cpi__init.module, .Lfunc_end2-__cpi__init.module
+.Lfunc_end4:
+	.size	__cpi__init.module, .Lfunc_end4-__cpi__init.module
 	.cfi_endproc
                                         # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
+	.asciz	"Thou base belongs to us"
+	.size	.L.str, 24
+
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
 	.asciz	"hello"
-	.size	.L.str, 6
+	.size	.L.str.1, 6
 
 	.section	.init_array.0,"aw",@init_array
 	.p2align	3

@@ -167,7 +167,7 @@ void CPI::insertBndcl(StoreInst *LI, CallInst* CI, int priority) {
   }
 
   IRBuilder<> IRB(CI);
-  auto function = callToFunc[CI];
+  auto function = getFunc(CI);
   auto ptrOP = LI->getPointerOperand();
   auto *size = ConstantInt::get(Type::getInt8Ty(LI->getContext()), priority);
   auto ptrOpAsVoidPtr =
@@ -182,7 +182,7 @@ void CPI::insertBndcl(StoreInst *LI, CallInst* CI, int priority) {
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
 
-void CPI::insertBndcu(CallInst *CI, Function *func, int priority) {
+void CPI::insertBndcu(StoreInst *LI, CallInst* CI, int priority) {
   _DI.numBndCu++;
   std::string bndReg;
   switch (priority) {
@@ -467,6 +467,7 @@ void CPI::instrumentDaStuff() {
       int Reg = funcToReg[callToFunc[sup]];
       StoreInst* check = FuncToSI[temp];
      insertBndcl(check, sup, Reg);
+     insertBndcu(check, sup, Reg);
 
   }
 }

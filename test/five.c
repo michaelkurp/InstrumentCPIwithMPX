@@ -2,9 +2,16 @@
 #include <stdlib.h>
 
 struct test{
-        char str[10];
+        char str[5];
         void (*funPtr)();
 };
+void breakme()
+{
+}
+void pwn()
+{
+	printf("Thou base belongs to us");
+}
 
 void hello()
 {
@@ -13,6 +20,7 @@ void hello()
 
 int main()
 {
+	breakme();
         struct test a;
         a.funPtr = &hello;
         a.funPtr();

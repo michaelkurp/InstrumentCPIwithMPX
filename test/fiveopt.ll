@@ -3,37 +3,52 @@ source_filename = "five.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-%struct.test = type { [10 x i8], void (...)* }
+%struct.test = type { [5 x i8], void (...)* }
 
-@.str = private unnamed_addr constant [6 x i8] c"hello\00", align 1
+@.str = private unnamed_addr constant [24 x i8] c"Thou base belongs to us\00", align 1
+@.str.1 = private unnamed_addr constant [6 x i8] c"hello\00", align 1
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @__cpi__init.module, i8* null }]
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @hello() #0 {
-  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0))
+define dso_local void @breakme() #0 {
+  ret void
+}
+
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @pwn() #0 {
+  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([24 x i8], [24 x i8]* @.str, i64 0, i64 0))
   ret void
 }
 
 declare dso_local i32 @printf(i8*, ...) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @hello() #0 {
+  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.1, i64 0, i64 0))
+  ret void
+}
+
+; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4
   %2 = alloca %struct.test, align 8
   store i32 0, i32* %1, align 4
+  call void @breakme()
   %3 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   store void (...)* bitcast (void ()* @hello to void (...)*), void (...)** %3, align 8
   call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*), i8 0)
   %4 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %5 = load void (...)*, void (...)** %4, align 8
   call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
+  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
   call void (...) %5()
   %6 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
-  %7 = getelementptr inbounds [10 x i8], [10 x i8]* %6, i64 0, i64 0
+  %7 = getelementptr inbounds [5 x i8], [5 x i8]* %6, i64 0, i64 0
   %8 = call i32 (i8*, ...) bitcast (i32 (...)* @gets to i32 (i8*, ...)*)(i8* %7)
   %9 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %10 = load void (...)*, void (...)** %9, align 8
   call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
+  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
   call void (...) %10()
   ret i32 0
 }
