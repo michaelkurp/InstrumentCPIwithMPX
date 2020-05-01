@@ -132,7 +132,7 @@ void CPI::insertBndMk(StoreInst *SI, int priority) {
   }
 
   IRBuilder<> IRB(SI);
-  auto ptrOP = SI->getPointerOperand()->stripPointerCasts();
+  auto ptrOP = SI->getValueOperand()->stripPointerCasts();
   auto *size = ConstantInt::get(Type::getInt8Ty(SI->getContext()), priority);
   auto ptrOpAsVoidPtr =
       IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(SI->getContext()), "");
@@ -141,7 +141,7 @@ void CPI::insertBndMk(StoreInst *SI, int priority) {
       {Type::getInt8PtrTy(SI->getContext()), Type::getInt8Ty(SI->getContext())},
       false);
 
-  auto mkBound = InlineAsm::get(checkTy, "bndmk (%rax, $1), " + bndReg,
+  auto mkBound = InlineAsm::get(checkTy, "bndmk 1($0), " + bndReg,
                                 "r", true);
   IRB.SetInsertPoint(SI->getNextNode());
   IRB.CreateCall(mkBound, {ptrOpAsVoidPtr, size});
@@ -167,16 +167,17 @@ void CPI::insertBndcl(StoreInst *LI, CallInst* CI, int priority) {
   }
 
   IRBuilder<> IRB(CI);
+  auto function = callToFunc[CI];
   auto ptrOP = LI->getPointerOperand();
   auto *size = ConstantInt::get(Type::getInt8Ty(LI->getContext()), priority);
   auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(LI->getContext()), "");
+      IRB.CreateBitCast(function, Type::getInt8PtrTy(LI->getContext()), "");
   auto checkTy =
       FunctionType::get(Type::getVoidTy(LI->getContext()),
                         {Type::getInt8PtrTy(LI->getContext())}, false);
 
-  auto ckBound = InlineAsm::get(checkTy, "bndcl ($0), " + bndReg,
-                                "r,~{dirflag}, ~{fpsr}, ~{flags}", true);
+  auto ckBound = InlineAsm::get(checkTy, "bndcl 1($0), " + bndReg,
+                                "r", true);
   IRB.SetInsertPoint(CI);
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
@@ -464,7 +465,7 @@ void CPI::instrumentDaStuff() {
       Function* temp = callToFunc[sup];
       int Reg = funcToReg[callToFunc[sup]];
       StoreInst* check = FuncToSI[temp];
-     // insertBndcl(check, sup, Reg);
+     insertBndcl(check, sup, Reg);
 
   }
 }
