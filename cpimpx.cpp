@@ -167,14 +167,18 @@ void CPI::insertBndcl(StoreInst *LI, CallInst* CI, int priority) {
   }
 
   IRBuilder<> IRB(CI);
-  auto function = getFunc(CI);
-  auto ptrOP = LI->getPointerOperand();
+  //auto function = getFunc(CI);
+  LoadInst* load = dyn_cast<LoadInst>(CI->getCalledValue());
+if(!load)
+	return;
+
+  auto ptrOP = load->getPointerOperand();
   auto *size = ConstantInt::get(Type::getInt8Ty(LI->getContext()), priority);
   auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(function, Type::getInt8PtrTy(LI->getContext()), "");
+      IRB.CreateBitCast(ptrOP, Type::getInt16PtrTy(LI->getContext()), "");
   auto checkTy =
       FunctionType::get(Type::getVoidTy(LI->getContext()),
-                        {Type::getInt8PtrTy(LI->getContext())}, false);
+                        {Type::getInt16PtrTy(LI->getContext())}, false);
 
   auto ckBound = InlineAsm::get(checkTy, "bndcl 1($0), " + bndReg,
                                 "r", true);
@@ -202,13 +206,16 @@ void CPI::insertBndcu(StoreInst *LI, CallInst* CI, int priority) {
   }
 
   IRBuilder<> IRB(CI);
-  auto function = getFunc(CI);
+  LoadInst* test = dyn_cast<LoadInst>(CI->getCalledValue());
+	if(!test)
+		return;
+  auto function = test->getPointerOperand();
   auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
   auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(function, Type::getInt8PtrTy(CI->getContext()), "");
+      IRB.CreateBitCast(function, Type::getInt16PtrTy(CI->getContext()), "");
   auto checkTy =
       FunctionType::get(Type::getVoidTy(CI->getContext()),
-                        {Type::getInt8PtrTy(CI->getContext())}, false);
+                        {Type::getInt16PtrTy(CI->getContext())}, false);
 
   auto ckBound = InlineAsm::get(checkTy, "bndcu 1($0), " + bndReg,
                       "r", true);

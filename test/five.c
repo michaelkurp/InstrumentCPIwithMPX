@@ -2,20 +2,20 @@
 #include <stdlib.h>
 
 struct test{
-        char str[5];
+        char str[2];
         void (*funPtr)();
 };
 void breakme()
 {
+	struct test a[20];
+}
+void hello()
+{
+        printf("hello");
 }
 void pwn()
 {
 	printf("Thou base belongs to us");
-}
-
-void hello()
-{
-        printf("hello");
 }
 
 int main()
@@ -24,10 +24,9 @@ int main()
         struct test a;
         a.funPtr = &hello;
         a.funPtr();
-
-        gets(a.str);
-
-        a.funPtr();
+	strcpy(a.str, "@@@@@@@@@\a@@@@");        
+	a.funPtr();
 
         return 0;
 }
+

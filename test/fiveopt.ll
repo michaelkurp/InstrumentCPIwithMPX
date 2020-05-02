@@ -3,28 +3,30 @@ source_filename = "five.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-%struct.test = type { [5 x i8], void (...)* }
+%struct.test = type { [2 x i8], void (...)* }
 
-@.str = private unnamed_addr constant [24 x i8] c"Thou base belongs to us\00", align 1
-@.str.1 = private unnamed_addr constant [6 x i8] c"hello\00", align 1
+@.str = private unnamed_addr constant [6 x i8] c"hello\00", align 1
+@.str.1 = private unnamed_addr constant [24 x i8] c"Thou base belongs to us\00", align 1
+@.str.2 = private unnamed_addr constant [15 x i8] c"@@@@@@@@@\07@@@@\00", align 1
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @__cpi__init.module, i8* null }]
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local void @breakme() #0 {
+  %1 = alloca [20 x %struct.test], align 16
   ret void
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @pwn() #0 {
-  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([24 x i8], [24 x i8]* @.str, i64 0, i64 0))
+define dso_local void @hello() #0 {
+  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0))
   ret void
 }
 
 declare dso_local i32 @printf(i8*, ...) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @hello() #0 {
-  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.1, i64 0, i64 0))
+define dso_local void @pwn() #0 {
+  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([24 x i8], [24 x i8]* @.str.1, i64 0, i64 0))
   ret void
 }
 
@@ -39,21 +41,25 @@ define dso_local i32 @main() #0 {
   call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*), i8 0)
   %4 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %5 = load void (...)*, void (...)** %4, align 8
-  call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
-  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
+  %6 = bitcast void (...)** %4 to i16*
+  call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i16* %6)
+  %7 = bitcast void (...)** %4 to i16*
+  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i16* %7)
   call void (...) %5()
-  %6 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
-  %7 = getelementptr inbounds [5 x i8], [5 x i8]* %6, i64 0, i64 0
-  %8 = call i32 (i8*, ...) bitcast (i32 (...)* @gets to i32 (i8*, ...)*)(i8* %7)
-  %9 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
-  %10 = load void (...)*, void (...)** %9, align 8
-  call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
-  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*))
-  call void (...) %10()
+  %8 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
+  %9 = getelementptr inbounds [2 x i8], [2 x i8]* %8, i64 0, i64 0
+  %10 = call i8* @strcpy(i8* %9, i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str.2, i64 0, i64 0))
+  %11 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
+  %12 = load void (...)*, void (...)** %11, align 8
+  %13 = bitcast void (...)** %11 to i16*
+  call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i16* %13)
+  %14 = bitcast void (...)** %11 to i16*
+  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i16* %14)
+  call void (...) %12()
   ret i32 0
 }
 
-declare dso_local i32 @gets(...) #1
+declare dso_local i8* @strcpy(i8*, i8*) #1
 
 declare void @__cpi__init()
 
