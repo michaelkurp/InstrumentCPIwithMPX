@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,7 +8,6 @@ struct test{
 };
 void breakme()
 {
-	struct test a[20];
 }
 void hello()
 {
@@ -20,11 +20,12 @@ void pwn()
 
 int main()
 {
-	breakme();
+//	breakme();
         struct test a;
         a.funPtr = &hello;
-        a.funPtr();
-	strcpy(a.str, "@@@@@@@@@\a@@@@");        
+	a.funPtr();
+	strcpy(a.str, "@@@@@@@@@\a@");        
+	breakme();
 	a.funPtr();
 
         return 0;

@@ -7,12 +7,11 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @.str = private unnamed_addr constant [6 x i8] c"hello\00", align 1
 @.str.1 = private unnamed_addr constant [24 x i8] c"Thou base belongs to us\00", align 1
-@.str.2 = private unnamed_addr constant [15 x i8] c"@@@@@@@@@\07@@@@\00", align 1
+@.str.2 = private unnamed_addr constant [12 x i8] c"@@@@@@@@@\07@\00", align 1
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @__cpi__init.module, i8* null }]
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local void @breakme() #0 {
-  %1 = alloca [20 x %struct.test], align 16
   ret void
 }
 
@@ -35,31 +34,32 @@ define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4
   %2 = alloca %struct.test, align 8
   store i32 0, i32* %1, align 4
-  call void @breakme()
   %3 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   store void (...)* bitcast (void ()* @hello to void (...)*), void (...)** %3, align 8
   call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*), i8 0)
   %4 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %5 = load void (...)*, void (...)** %4, align 8
-  %6 = bitcast void (...)** %4 to i16*
-  call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i16* %6)
-  %7 = bitcast void (...)** %4 to i16*
-  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i16* %7)
+  %6 = bitcast void (...)* %5 to i64*
+  call void asm sideeffect "bndcl ($0), %bnd0", "r"(i64* %6)
+  %7 = bitcast void (...)* %5 to i64*
+  call void asm sideeffect "bndcu ($0), %bnd0", "r"(i64* %7)
   call void (...) %5()
   %8 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
   %9 = getelementptr inbounds [2 x i8], [2 x i8]* %8, i64 0, i64 0
-  %10 = call i8* @strcpy(i8* %9, i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str.2, i64 0, i64 0))
+  %10 = call i8* @strcpy(i8* %9, i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str.2, i64 0, i64 0)) #3
+  call void @breakme()
   %11 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %12 = load void (...)*, void (...)** %11, align 8
-  %13 = bitcast void (...)** %11 to i16*
-  call void asm sideeffect "bndcl 1($0), %bnd0", "r"(i16* %13)
-  %14 = bitcast void (...)** %11 to i16*
-  call void asm sideeffect "bndcu 1($0), %bnd0", "r"(i16* %14)
+  %13 = bitcast void (...)* %12 to i64*
+  call void asm sideeffect "bndcl ($0), %bnd0", "r"(i64* %13)
+  %14 = bitcast void (...)* %12 to i64*
+  call void asm sideeffect "bndcu ($0), %bnd0", "r"(i64* %14)
   call void (...) %12()
   ret i32 0
 }
 
-declare dso_local i8* @strcpy(i8*, i8*) #1
+; Function Attrs: nounwind
+declare dso_local i8* @strcpy(i8*, i8*) #2
 
 declare void @__cpi__init()
 
@@ -70,6 +70,8 @@ define internal void @__cpi__init.module() {
 
 attributes #0 = { noinline nounwind optnone uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #2 = { nounwind "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #3 = { nounwind }
 
 !llvm.module.flags = !{!0}
 !llvm.ident = !{!1}
