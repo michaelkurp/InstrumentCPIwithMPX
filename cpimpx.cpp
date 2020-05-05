@@ -10,6 +10,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
@@ -25,8 +26,6 @@
 #include "llvm/PassSupport.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-#include "llvm/IR/Dominators.h"
-
 
 #include <iostream>
 #include <map>
@@ -132,16 +131,13 @@ void CPI::insertBndMk(StoreInst *SI, int priority) {
     bndReg = "%bnd3";
     break;
   }
-
+  LLVMContext &C = SI->getContext();
   IRBuilder<> IRB(SI);
   auto ptrOP = SI->getValueOperand()->stripPointerCasts();
-  auto *size = ConstantInt::get(Type::getInt8Ty(SI->getContext()), priority);
-  auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(SI->getContext()), "");
+  auto *size = ConstantInt::get(Type::getInt8Ty(C), priority);
+  auto ptrOpAsVoidPtr = IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(C), "");
   auto checkTy = FunctionType::get(
-      Type::getVoidTy(SI->getContext()),
-      {Type::getInt8PtrTy(SI->getContext()), Type::getInt8Ty(SI->getContext())},
-      false);
+      Type::getVoidTy(C), {Type::getInt8PtrTy(C), Type::getInt8Ty(C)}, false);
 
   auto mkBound = InlineAsm::get(checkTy, "bndmk 1($0), " + bndReg, "r", true);
   IRB.SetInsertPoint(SI->getNextNode());
@@ -166,21 +162,18 @@ void CPI::insertBndcl(StoreInst *LI, CallInst *CI, int priority) {
     bndReg = "%bnd3";
     break;
   }
+  LLVMContext &C = CI->getContext();
 
   IRBuilder<> IRB(CI);
   LoadInst *test = dyn_cast<LoadInst>(CI->getCalledValue());
   if (!test)
     return;
-  auto function = test->getPointerOperand();
-  auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
 
-  //auto realFunction = CI->getOperand(0);
   auto realFunction = CI->getCalledOperand();
-  auto ptrOpAsVoidPtr = IRB.CreateBitCast(
-      realFunction, Type::getInt64PtrTy(CI->getContext()), "");
+  auto ptrOpAsVoidPtr =
+      IRB.CreateBitCast(realFunction, Type::getInt64PtrTy(C), "");
   auto checkTy =
-      FunctionType::get(Type::getVoidTy(CI->getContext()),
-                        {Type::getInt64PtrTy(CI->getContext())}, false);
+      FunctionType::get(Type::getVoidTy(C), {Type::getInt64PtrTy(C)}, false);
 
   auto ckBound = InlineAsm::get(checkTy, "bndcl ($0), " + bndReg, "r", true);
   IRB.SetInsertPoint(CI);
@@ -205,21 +198,17 @@ void CPI::insertBndcu(StoreInst *LI, CallInst *CI, int priority) {
     bndReg = "%bnd3";
     break;
   }
-
+  LLVMContext &C = CI->getContext();
   IRBuilder<> IRB(CI);
   LoadInst *test = dyn_cast<LoadInst>(CI->getCalledValue());
   if (!test)
     return;
-  auto function = test->getPointerOperand();
-  auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
 
-  //auto realFunction = CI->getOperand(0);
   auto realFunction = CI->getCalledOperand();
-  auto ptrOpAsVoidPtr = IRB.CreateBitCast(
-      realFunction, Type::getInt64PtrTy(CI->getContext()), "");
+  auto ptrOpAsVoidPtr =
+      IRB.CreateBitCast(realFunction, Type::getInt64PtrTy(C), "");
   auto checkTy =
-      FunctionType::get(Type::getVoidTy(CI->getContext()),
-                        {Type::getInt64PtrTy(CI->getContext())}, false);
+      FunctionType::get(Type::getVoidTy(C), {Type::getInt64PtrTy(C)}, false);
 
   auto ckBound = InlineAsm::get(checkTy, "bndcu ($0), " + bndReg, "r", true);
   IRB.SetInsertPoint(CI);
@@ -245,27 +234,24 @@ void CPI::insertBndldx(CallInst *CI, int priority) {
     bndReg = "%bnd3";
     break;
   }
-
+  LLVMContext &C = CI->getContext();
   IRBuilder<> IRB(CI);
   LoadInst *test = dyn_cast<LoadInst>(CI->getCalledValue());
   if (!test)
     return;
   auto functionPtr = test->getPointerOperand();
-  // auto ptrOP = functionPtr->getPointerOperand();
-  auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(functionPtr, Type::getInt8PtrTy(CI->getContext()), "");
-  auto checkTy =
-      FunctionType::get(Type::getVoidTy(CI->getContext()),
 
-                        {Type::getInt8PtrTy(CI->getContext())}, false);
+  auto ptrOpAsVoidPtr =
+      IRB.CreateBitCast(functionPtr, Type::getInt8PtrTy(C), "");
+  auto checkTy = FunctionType::get(Type::getVoidTy(C),
+
+                                   {Type::getInt8PtrTy(C)}, false);
 
   auto ckBound =
       InlineAsm::get(checkTy, "bndldx ($0, %rdx, 1), " + bndReg, "r", true);
   auto zeroType =
-      FunctionType::get(Type::getVoidTy(CI->getContext()),
-                        {Type::getInt64Ty(CI->getContext())}, false);
-  ConstantInt *zeroConstant =
-      ConstantInt::get(Type::getInt64Ty(CI->getContext()), 0, false);
+      FunctionType::get(Type::getVoidTy(C), {Type::getInt64Ty(C)}, false);
+  ConstantInt *zeroConstant = ConstantInt::get(Type::getInt64Ty(C), 0, false);
 
   auto zero = InlineAsm::get(zeroType, "movq $0, %rdx", "r", true);
   IRB.SetInsertPoint(CI);
@@ -292,19 +278,16 @@ void CPI::insertBndStx(StoreInst *SI, int priority) {
     break;
   }
 
+  LLVMContext &C = SI->getContext();
   IRBuilder<> IRB(SI);
   auto ptrOP = SI->getPointerOperand();
-  auto *size = ConstantInt::get(Type::getInt8Ty(SI->getContext()), priority);
-  auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(SI->getContext()), "");
+  auto *size = ConstantInt::get(Type::getInt8Ty(C), priority);
+  auto ptrOpAsVoidPtr = IRB.CreateBitCast(ptrOP, Type::getInt8PtrTy(C), "");
   auto checkTy =
-      FunctionType::get(Type::getVoidTy(SI->getContext()),
-                        {Type::getInt8PtrTy(SI->getContext())}, false);
+      FunctionType::get(Type::getVoidTy(C), {Type::getInt8PtrTy(C)}, false);
   auto zeroType =
-      FunctionType::get(Type::getVoidTy(SI->getContext()),
-                        {Type::getInt64Ty(SI->getContext())}, false);
-  ConstantInt *zeroConstant =
-      ConstantInt::get(Type::getInt64Ty(SI->getContext()), 0, false);
+      FunctionType::get(Type::getVoidTy(C), {Type::getInt64Ty(C)}, false);
+  ConstantInt *zeroConstant = ConstantInt::get(Type::getInt64Ty(C), 0, false);
 
   auto zero = InlineAsm::get(zeroType, "movq $0, %rdx", "r", true);
   auto ckBound = InlineAsm::get(checkTy, "bndstx " + bndReg + ", ($0, %rdx, 1)",
@@ -472,9 +455,13 @@ struct CompareReg {
 };
 void CPI::instrumentDaStuff() {
   std::map<Function *, int> funcToReg;
+  int regCounter = 0;
   for (auto sup : _BI.needsBounds) {
     Function *temp = SItoFunc[sup];
-
+    int regNum = regCounter % 4;
+    insertBndMk(sup, regNum);
+    insertBndStx(sup, regNum);
+    /*
     int regNum = _RI.returnFirstFreeReg();
     if (regNum == 42) {
       // ToDO
@@ -482,7 +469,9 @@ void CPI::instrumentDaStuff() {
       insertBndMk(sup, regNum);
       insertBndStx(sup, regNum);
     }
+    */
     funcToReg[temp] = regNum;
+    regCounter++;
   }
   for (auto sup : _BI.needsChecks) {
     Function *temp = callToFunc[sup];
@@ -504,7 +493,7 @@ bool CPI::runOnModule(Module &M) {
 
   for (Module::iterator it = M.begin(); it != M.end(); ++it) {
     Function &F = *it;
-    //DominatorTree DT = DominatorTree(F);
+    // DominatorTree DT = DominatorTree(F);
     runOnFunction(F);
   }
   instrumentDaStuff();
