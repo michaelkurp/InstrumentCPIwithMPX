@@ -38,44 +38,37 @@ public:
   bool bnd1_reg = true;
   bool bnd2_reg = true;
   bool bnd3_reg = true;
-  void freeReg(int regNum)
-  {
+  void freeReg(int regNum) {
     assert(regNum > -1 && regNum < 4);
-    switch(regNum)
-    {
-      case 0:
-        bnd0_reg = true;
+    switch (regNum) {
+    case 0:
+      bnd0_reg = true;
       break;
-      case 1:
-        bnd1_reg = true;
+    case 1:
+      bnd1_reg = true;
       break;
-      case 2:
-        bnd2_reg = true;
+    case 2:
+      bnd2_reg = true;
       break;
-      case 3:
-        bnd3_reg = true;
+    case 3:
+      bnd3_reg = true;
       break;
     }
   }
-  int returnFirstFreeReg()
-  {
-    if(bnd0_reg){
+  int returnFirstFreeReg() {
+    if (bnd0_reg) {
       bnd0_reg = false;
       return 0;
-    }
-    else if(bnd1_reg){
+    } else if (bnd1_reg) {
       bnd1_reg = false;
       return 1;
-    }
-    else if(bnd2_reg){
+    } else if (bnd2_reg) {
       bnd2_reg = false;
       return 2;
-    }
-    else if(bnd3_reg){
+    } else if (bnd3_reg) {
       bnd3_reg = false;
       return 3;
-    }
-    else{
+    } else {
       return 42;
     }
   }
@@ -94,24 +87,24 @@ class CPI : public ModulePass {
   std::set<Value *> _call_list;
   std::map<StoreInst *, Function *> SItoFunc;
   std::map<Function *, StoreInst *> FuncToSI;
-  std::map<CallInst* , Function * > callToFunc;
+  std::map<CallInst *, Function *> callToFunc;
   std::map<Function *, int> callNum;
-  std::map<StoreInst *, AllocaInst*> SItoAll;
-  std::map<CallInst* , LoadInst*> CalltoLoad;
-  LoadInst* currLoadInst = NULL;
+  std::map<StoreInst *, AllocaInst *> SItoAll;
+  std::map<CallInst *, LoadInst *> CalltoLoad;
+  LoadInst *currLoadInst = NULL;
 
-  Function* getPhiNode(PHINode *);
-  Function* getFuncPtrArg(Argument *);
-  Function* getGetElementPtrInst(GetElementPtrInst *);
-  Function* getCalledInst(CallInst *);
-  Function* getLoadInst(LoadInst *);
-  Function* getCallInst(CallInst *);
-  Function* getFunc(CallInst *);
+  Function *getPhiNode(PHINode *);
+  Function *getFuncPtrArg(Argument *);
+  Function *getGetElementPtrInst(GetElementPtrInst *);
+  Function *getCalledInst(CallInst *);
+  Function *getLoadInst(LoadInst *);
+  Function *getCallInst(CallInst *);
+  Function *getFunc(CallInst *);
 
   void insertBndMk(StoreInst *, int);
   void insertBndcl(StoreInst *, CallInst *, int);
   void insertBndcu(StoreInst *, CallInst *, int);
-  void insertBndldx(StoreInst *, int);
+  void insertBndldx(CallInst *, int);
   void insertBndStx(StoreInst *, int);
 
   void instrumentDaStuff();
