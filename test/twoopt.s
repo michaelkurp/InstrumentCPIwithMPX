@@ -35,27 +35,72 @@ main:                                   # @main
 	.cfi_def_cfa_register %rbp
 	subq	$48, %rsp
 	movl	$0, -36(%rbp)
-	movabsq	$add, %rax
-	movq	%rax, -24(%rbp)
-	movq	%rax, -16(%rbp)
-	xorl	%eax, %eax
+	leaq	-24(%rbp), %rax
+	movabsq	$add, %rcx
+	movq	%rcx, -24(%rbp)
+	movl	$add, %ecx
 	#APP
-	movq	%rax, %rdx
+	bndmk	1(%rcx), %bnd0
 	#NO_APP
-	xorl	%eax, %eax
+	xorl	%ecx, %ecx
 	#APP
-	movq	%rax, %rdx
+	movq	%rcx, %rdx
+	#NO_APP
+	#APP
+	bndstx	%bnd0, (%rax,%rdx)
+	#NO_APP
+	leaq	-16(%rbp), %rax
+	movabsq	$add, %rcx
+	movq	%rcx, -16(%rbp)
+	movl	$add, %ecx
+	#APP
+	bndmk	1(%rcx), %bnd1
+	#NO_APP
+	xorl	%ecx, %ecx
+	#APP
+	movq	%rcx, %rdx
+	#NO_APP
+	#APP
+	bndstx	%bnd1, (%rax,%rdx)
 	#NO_APP
 	movl	$1, -8(%rbp)
 	movl	$2, -4(%rbp)
 	movq	-24(%rbp), %rax
 	movl	-8(%rbp), %edi
 	movl	-4(%rbp), %esi
+	leaq	-24(%rbp), %rcx
+	xorl	%edx, %edx
+	#APP
+	movq	%rdx, %rdx
+	#NO_APP
+	#APP
+	bndldx	(%rcx,%rdx), %bnd1
+	#NO_APP
+	#APP
+	bndcl	(%rax), %bnd1
+	#NO_APP
+	#APP
+	bndcu	(%rax), %bnd1
+	#NO_APP
 	callq	*%rax
 	movl	%eax, -32(%rbp)
 	movq	-16(%rbp), %rax
 	movl	-8(%rbp), %edi
 	movl	-4(%rbp), %esi
+	leaq	-16(%rbp), %rcx
+	xorl	%edx, %edx
+	#APP
+	movq	%rdx, %rdx
+	#NO_APP
+	#APP
+	bndldx	(%rcx,%rdx), %bnd1
+	#NO_APP
+	#APP
+	bndcl	(%rax), %bnd1
+	#NO_APP
+	#APP
+	bndcu	(%rax), %bnd1
+	#NO_APP
 	callq	*%rax
 	movl	%eax, -28(%rbp)
 	xorl	%eax, %eax

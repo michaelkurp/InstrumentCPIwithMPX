@@ -25,6 +25,8 @@
 #include "llvm/PassSupport.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include "llvm/IR/Dominators.h"
+
 
 #include <iostream>
 #include <map>
@@ -166,22 +168,19 @@ void CPI::insertBndcl(StoreInst *LI, CallInst *CI, int priority) {
   }
 
   IRBuilder<> IRB(CI);
-  auto function = CI->getOperand(0);
-  LoadInst *load = dyn_cast<LoadInst>(CI->getCalledValue());
-  if (!load)
+  LoadInst *test = dyn_cast<LoadInst>(CI->getCalledValue());
+  if (!test)
     return;
+  auto function = test->getPointerOperand();
+  auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
 
-  auto ptrOP = load->getPointerOperand();
-  GetElementPtrInst *actual = dyn_cast<GetElementPtrInst>(ptrOP);
-  if (!actual)
-    return;
-  auto ptrOp = actual->getPointerOperand();
-  auto *size = ConstantInt::get(Type::getInt8Ty(LI->getContext()), priority);
-  auto ptrOpAsVoidPtr =
-      IRB.CreateBitCast(function, Type::getInt64PtrTy(LI->getContext()), "");
+  //auto realFunction = CI->getOperand(0);
+  auto realFunction = CI->getCalledOperand();
+  auto ptrOpAsVoidPtr = IRB.CreateBitCast(
+      realFunction, Type::getInt64PtrTy(CI->getContext()), "");
   auto checkTy =
-      FunctionType::get(Type::getVoidTy(LI->getContext()),
-                        {Type::getInt64PtrTy(LI->getContext())}, false);
+      FunctionType::get(Type::getVoidTy(CI->getContext()),
+                        {Type::getInt64PtrTy(CI->getContext())}, false);
 
   auto ckBound = InlineAsm::get(checkTy, "bndcl ($0), " + bndReg, "r", true);
   IRB.SetInsertPoint(CI);
@@ -214,7 +213,8 @@ void CPI::insertBndcu(StoreInst *LI, CallInst *CI, int priority) {
   auto function = test->getPointerOperand();
   auto *size = ConstantInt::get(Type::getInt8Ty(CI->getContext()), priority);
 
-  auto realFunction = CI->getOperand(0);
+  //auto realFunction = CI->getOperand(0);
+  auto realFunction = CI->getCalledOperand();
   auto ptrOpAsVoidPtr = IRB.CreateBitCast(
       realFunction, Type::getInt64PtrTy(CI->getContext()), "");
   auto checkTy =
@@ -496,7 +496,6 @@ void CPI::instrumentDaStuff() {
 bool CPI::runOnModule(Module &M) {
   LLVMContext &C = M.getContext();
   DL = &M.getDataLayout();
-  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   initCPIFunctions(DL, M, _CF);
 
@@ -505,6 +504,7 @@ bool CPI::runOnModule(Module &M) {
 
   for (Module::iterator it = M.begin(); it != M.end(); ++it) {
     Function &F = *it;
+    //DominatorTree DT = DominatorTree(F);
     runOnFunction(F);
   }
   instrumentDaStuff();
