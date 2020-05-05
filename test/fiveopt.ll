@@ -42,14 +42,28 @@ define dso_local i32 @main() #0 {
   call void asm sideeffect "bndstx %bnd0, ($0, %rdx, 1)", "r"(i8* %4)
   %5 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
   %6 = load void (...)*, void (...)** %5, align 8
+  %7 = bitcast void (...)** %5 to i8*
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  call void asm sideeffect "bndldx ($0, %rdx, 1), %bnd0", "r"(i8* %7)
+  %8 = bitcast void (...)* %6 to i64*
+  call void asm sideeffect "bndcl ($0), %bnd0", "r"(i64* %8)
+  %9 = bitcast void (...)* %6 to i64*
+  call void asm sideeffect "bndcu ($0), %bnd0", "r"(i64* %9)
   call void (...) %6()
-  %7 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
-  %8 = getelementptr inbounds [2 x i8], [2 x i8]* %7, i64 0, i64 0
-  %9 = call i8* @strcpy(i8* %8, i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str.2, i64 0, i64 0)) #3
+  %10 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 0
+  %11 = getelementptr inbounds [2 x i8], [2 x i8]* %10, i64 0, i64 0
+  %12 = call i8* @strcpy(i8* %11, i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str.2, i64 0, i64 0)) #3
   call void @breakme()
-  %10 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
-  %11 = load void (...)*, void (...)** %10, align 8
-  call void (...) %11()
+  %13 = getelementptr inbounds %struct.test, %struct.test* %2, i32 0, i32 1
+  %14 = load void (...)*, void (...)** %13, align 8
+  %15 = bitcast void (...)** %13 to i8*
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  call void asm sideeffect "bndldx ($0, %rdx, 1), %bnd0", "r"(i8* %15)
+  %16 = bitcast void (...)* %14 to i64*
+  call void asm sideeffect "bndcl ($0), %bnd0", "r"(i64* %16)
+  %17 = bitcast void (...)* %14 to i64*
+  call void asm sideeffect "bndcu ($0), %bnd0", "r"(i64* %17)
+  call void (...) %14()
   ret i32 0
 }
 

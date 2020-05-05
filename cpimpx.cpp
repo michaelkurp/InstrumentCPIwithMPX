@@ -258,13 +258,18 @@ void CPI::insertBndldx(CallInst *CI, int priority) {
       FunctionType::get(Type::getVoidTy(CI->getContext()),
 
                         {Type::getInt8PtrTy(CI->getContext())}, false);
-  
-  auto ckBound = InlineAsm::get(checkTy, "bndldx ($0, %rdx, 1), " + bndReg,
-                                "r,{bnd0}", true);
-auto zeroType = FunctionType::get(Type::getVoidTy(CI->getContext()), {}, false);
-auto zero = InlineAsm::get(zeroType, "mov $0x0, %rdx", "={rdx},{rdx}", true);  
-IRB.SetInsertPoint(CI);
-IRB.CreateCall(zero, {});
+
+  auto ckBound =
+      InlineAsm::get(checkTy, "bndldx ($0, %rdx, 1), " + bndReg, "r", true);
+  auto zeroType =
+      FunctionType::get(Type::getVoidTy(CI->getContext()),
+                        {Type::getInt64Ty(CI->getContext())}, false);
+  ConstantInt *zeroConstant =
+      ConstantInt::get(Type::getInt64Ty(CI->getContext()), 0, false);
+
+  auto zero = InlineAsm::get(zeroType, "movq $0, %rdx", "r", true);
+  IRB.SetInsertPoint(CI);
+  IRB.CreateCall(zero, {zeroConstant});
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
 
@@ -295,9 +300,11 @@ void CPI::insertBndStx(StoreInst *SI, int priority) {
   auto checkTy =
       FunctionType::get(Type::getVoidTy(SI->getContext()),
                         {Type::getInt8PtrTy(SI->getContext())}, false);
-  auto zeroType = FunctionType::get(Type::getVoidTy(SI->getContext()),
-			{Type::getInt64Ty(SI->getContext())}, false);
-  ConstantInt* zeroConstant = ConstantInt::get(Type::getInt64Ty(SI->getContext()), 0, false);
+  auto zeroType =
+      FunctionType::get(Type::getVoidTy(SI->getContext()),
+                        {Type::getInt64Ty(SI->getContext())}, false);
+  ConstantInt *zeroConstant =
+      ConstantInt::get(Type::getInt64Ty(SI->getContext()), 0, false);
 
   auto zero = InlineAsm::get(zeroType, "movq $0, %rdx", "r", true);
   auto ckBound = InlineAsm::get(checkTy, "bndstx " + bndReg + ", ($0, %rdx, 1)",
@@ -481,9 +488,9 @@ void CPI::instrumentDaStuff() {
     Function *temp = callToFunc[sup];
     int Reg = funcToReg[callToFunc[sup]];
     StoreInst *check = FuncToSI[temp];
-  //  insertBndldx(sup, Reg);
-  //  insertBndcl(check, sup, Reg);
-  //  insertBndcu(check, sup, Reg);
+    insertBndldx(sup, Reg);
+    insertBndcl(check, sup, Reg);
+    insertBndcu(check, sup, Reg);
   }
 }
 bool CPI::runOnModule(Module &M) {

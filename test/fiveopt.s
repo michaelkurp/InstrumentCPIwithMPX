@@ -88,14 +88,46 @@ main:                                   # @main
 	#APP
 	bndstx	%bnd0, (%rcx,%rdx)
 	#NO_APP
+	leaq	-16(%rbp), %rax
+	addq	$8, %rax
+	movq	-8(%rbp), %rcx
+	xorl	%edx, %edx
+	#APP
+	movq	%rdx, %rdx
+	#NO_APP
+	#APP
+	bndldx	(%rax,%rdx), %bnd0
+	#NO_APP
+	#APP
+	bndcl	(%rcx), %bnd0
+	#NO_APP
+	#APP
+	bndcu	(%rcx), %bnd0
+	#NO_APP
 	movb	$0, %al
-	callq	*-8(%rbp)
+	callq	*%rcx
 	leaq	-16(%rbp), %rdi
 	movl	$.L.str.2, %esi
 	callq	strcpy
 	callq	breakme
+	leaq	-16(%rbp), %rax
+	addq	$8, %rax
+	movq	-8(%rbp), %rcx
+	xorl	%edx, %edx
+	#APP
+	movq	%rdx, %rdx
+	#NO_APP
+	#APP
+	bndldx	(%rax,%rdx), %bnd0
+	#NO_APP
+	#APP
+	bndcl	(%rcx), %bnd0
+	#NO_APP
+	#APP
+	bndcu	(%rcx), %bnd0
+	#NO_APP
 	movb	$0, %al
-	callq	*-8(%rbp)
+	callq	*%rcx
 	xorl	%eax, %eax
 	addq	$32, %rsp
 	popq	%rbp
