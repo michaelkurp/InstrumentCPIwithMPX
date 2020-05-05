@@ -118,15 +118,15 @@ moo:                                    # @moo
 	movl	%edx, -20(%rbp)
 	movabsq	$add, %rax
 	movq	%rax, -32(%rbp)
-	movl	$add, %eax
-	#APP
-	bndmk	1(%rax), %bnd0
-	#NO_APP
 	movabsq	$sub, %rax
 	movq	%rax, -40(%rbp)
-	movl	$sub, %eax
+	xorl	%eax, %eax
 	#APP
-	bndmk	1(%rax), %bnd1
+	movq	%rax, %rdx
+	#NO_APP
+	xorl	%eax, %eax
+	#APP
+	movq	%rax, %rdx
 	#NO_APP
 	movq	$0, -16(%rbp)
 	movsbl	-1(%rbp), %eax

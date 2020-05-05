@@ -20,15 +20,12 @@ declare dso_local i32 @printf(i8*, ...) #1
 define dso_local i32 @main() #0 {
   %1 = alloca %struct.test, align 8
   %2 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
+  %3 = bitcast void (...)** %2 to i8*
   store void (...)* bitcast (void ()* @hello to void (...)*), void (...)** %2, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*), i8 0)
-  %3 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
-  %4 = load void (...)*, void (...)** %3, align 8
-  %5 = bitcast void (...)* %4 to i64*
-  call void asm sideeffect "bndcl ($0), %bnd0", "r"(i64* %5)
-  %6 = bitcast void (...)* %4 to i64*
-  call void asm sideeffect "bndcu ($0), %bnd0", "r"(i64* %6)
-  call void (...) %4()
+  %4 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  %5 = load void (...)*, void (...)** %4, align 8
+  call void (...) %5()
   ret i32 0
 }
 

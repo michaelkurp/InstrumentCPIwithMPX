@@ -1,9 +1,9 @@
 	.text
-	.file	"four.c"
-	.globl	add                     # -- Begin function add
+	.file	"five.c"
+	.globl	breakme                 # -- Begin function breakme
 	.p2align	4, 0x90
-	.type	add,@function
-add:                                    # @add
+	.type	breakme,@function
+breakme:                                # @breakme
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -11,21 +11,17 @@ add:                                    # @add
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	movl	%edi, -8(%rbp)
-	movl	%esi, -4(%rbp)
-	movl	-8(%rbp), %eax
-	addl	-4(%rbp), %eax
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end0:
-	.size	add, .Lfunc_end0-add
+	.size	breakme, .Lfunc_end0-breakme
 	.cfi_endproc
                                         # -- End function
-	.globl	sub                     # -- Begin function sub
+	.globl	hello                   # -- Begin function hello
 	.p2align	4, 0x90
-	.type	sub,@function
-sub:                                    # @sub
+	.type	hello,@function
+hello:                                  # @hello
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -33,21 +29,20 @@ sub:                                    # @sub
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	movl	%edi, -8(%rbp)
-	movl	%esi, -4(%rbp)
-	movl	-8(%rbp), %eax
-	subl	-4(%rbp), %eax
+	movabsq	$.L.str, %rdi
+	movb	$0, %al
+	callq	printf
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end1:
-	.size	sub, .Lfunc_end1-sub
+	.size	hello, .Lfunc_end1-hello
 	.cfi_endproc
                                         # -- End function
-	.globl	foo                     # -- Begin function foo
+	.globl	pwn                     # -- Begin function pwn
 	.p2align	4, 0x90
-	.type	foo,@function
-foo:                                    # @foo
+	.type	pwn,@function
+pwn:                                    # @pwn
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -55,49 +50,14 @@ foo:                                    # @foo
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	subq	$48, %rsp
-	movl	%edi, -20(%rbp)
-	movabsq	$add, %rax
-	movq	%rax, -40(%rbp)
-	movabsq	$sub, %rax
-	movq	%rax, -32(%rbp)
-	xorl	%eax, %eax
-	#APP
-	movq	%rax, %rdx
-	#NO_APP
-	xorl	%eax, %eax
-	#APP
-	movq	%rax, %rdx
-	#NO_APP
-	movq	$0, -8(%rbp)
-	movl	$1, -16(%rbp)
-	movl	$2, -12(%rbp)
-	cmpl	$3, -20(%rbp)
-	jne	.LBB2_2
-# %bb.1:
-	movq	-40(%rbp), %rax
-	movq	%rax, -8(%rbp)
-	jmp	.LBB2_3
-.LBB2_2:
-	movq	-32(%rbp), %rax
-	movq	%rax, -8(%rbp)
-.LBB2_3:
-	cmpq	$0, -8(%rbp)
-	je	.LBB2_5
-# %bb.4:
-	movq	-8(%rbp), %rax
-	movl	-16(%rbp), %edi
-	movl	-12(%rbp), %esi
-	callq	*%rax
-	movl	%eax, -44(%rbp)
-.LBB2_5:
-	xorl	%eax, %eax
-	addq	$48, %rsp
+	movabsq	$.L.str.1, %rdi
+	movb	$0, %al
+	callq	printf
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end2:
-	.size	foo, .Lfunc_end2-foo
+	.size	pwn, .Lfunc_end2-pwn
 	.cfi_endproc
                                         # -- End function
 	.globl	main                    # -- Begin function main
@@ -111,13 +71,33 @@ main:                                   # @main
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	subq	$16, %rsp
-	movl	$0, -8(%rbp)
-	movl	$2, %edi
-	callq	foo
-	movl	%eax, -4(%rbp)
+	subq	$32, %rsp
+	movabsq	$hello, %rax
+	movl	$0, -20(%rbp)
+	leaq	-16(%rbp), %rcx
+	addq	$8, %rcx
+	movq	%rax, -8(%rbp)
+	movl	$hello, %eax
+	#APP
+	bndmk	1(%rax), %bnd0
+	#NO_APP
 	xorl	%eax, %eax
-	addq	$16, %rsp
+	#APP
+	movq	%rax, %rdx
+	#NO_APP
+	#APP
+	bndstx	%bnd0, (%rcx,%rdx)
+	#NO_APP
+	movb	$0, %al
+	callq	*-8(%rbp)
+	leaq	-16(%rbp), %rdi
+	movl	$.L.str.2, %esi
+	callq	strcpy
+	callq	breakme
+	movb	$0, %al
+	callq	*-8(%rbp)
+	xorl	%eax, %eax
+	addq	$32, %rsp
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
@@ -140,6 +120,22 @@ __cpi__init.module:                     # @__cpi__init.module
 	.size	__cpi__init.module, .Lfunc_end4-__cpi__init.module
 	.cfi_endproc
                                         # -- End function
+	.type	.L.str,@object          # @.str
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L.str:
+	.asciz	"hello"
+	.size	.L.str, 6
+
+	.type	.L.str.1,@object        # @.str.1
+.L.str.1:
+	.asciz	"Thou base belongs to us"
+	.size	.L.str.1, 24
+
+	.type	.L.str.2,@object        # @.str.2
+.L.str.2:
+	.asciz	"@@@@@@@@@\007@"
+	.size	.L.str.2, 12
+
 	.section	.init_array.0,"aw",@init_array
 	.p2align	3
 	.quad	__cpi__init.module

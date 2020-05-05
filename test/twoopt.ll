@@ -27,24 +27,24 @@ define dso_local i32 @main() #0 {
   %6 = alloca i32, align 4
   %7 = alloca i32, align 4
   store i32 0, i32* %1, align 4
+  %8 = bitcast i32 (i32, i32)** %2 to i8*
   store i32 (i32, i32)* @add, i32 (i32, i32)** %2, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (i32 (i32, i32)* @add to i8*), i8 0)
+  %9 = bitcast i32 (i32, i32)** %3 to i8*
   store i32 (i32, i32)* @add, i32 (i32, i32)** %3, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd1", "r"(i8* bitcast (i32 (i32, i32)* @add to i8*), i8 1)
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
   store i32 1, i32* %4, align 4
   store i32 2, i32* %5, align 4
-  %8 = load i32 (i32, i32)*, i32 (i32, i32)** %2, align 8
-  %9 = load i32, i32* %4, align 4
-  %10 = load i32, i32* %5, align 4
-  call void asm sideeffect "bndcu ($0), %bnd1", "r"(i16* bitcast (i32 (i32, i32)* @add to i16*))
-  %11 = call i32 %8(i32 %9, i32 %10)
-  store i32 %11, i32* %6, align 4
-  %12 = load i32 (i32, i32)*, i32 (i32, i32)** %3, align 8
-  %13 = load i32, i32* %4, align 4
-  %14 = load i32, i32* %5, align 4
-  call void asm sideeffect "bndcu ($0), %bnd1", "r"(i16* bitcast (i32 (i32, i32)* @add to i16*))
-  %15 = call i32 %12(i32 %13, i32 %14)
-  store i32 %15, i32* %7, align 4
+  %10 = load i32 (i32, i32)*, i32 (i32, i32)** %2, align 8
+  %11 = load i32, i32* %4, align 4
+  %12 = load i32, i32* %5, align 4
+  %13 = call i32 %10(i32 %11, i32 %12)
+  store i32 %13, i32* %6, align 4
+  %14 = load i32 (i32, i32)*, i32 (i32, i32)** %3, align 8
+  %15 = load i32, i32* %4, align 4
+  %16 = load i32, i32* %5, align 4
+  %17 = call i32 %14(i32 %15, i32 %16)
+  store i32 %17, i32* %7, align 4
   ret i32 0
 }
 

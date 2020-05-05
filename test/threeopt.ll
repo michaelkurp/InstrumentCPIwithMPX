@@ -79,42 +79,44 @@ define dso_local i32 @moo(i8 signext, i32, i32) #0 {
   store i8 %0, i8* %4, align 1
   store i32 %1, i32* %5, align 4
   store i32 %2, i32* %6, align 4
+  %11 = bitcast i32 (i32, i32)** %7 to i8*
   store i32 (i32, i32)* @add, i32 (i32, i32)** %7, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (i32 (i32, i32)* @add to i8*), i8 0)
+  %12 = bitcast i32 (i32, i32)** %8 to i8*
   store i32 (i32, i32)* @sub, i32 (i32, i32)** %8, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd1", "r"(i8* bitcast (i32 (i32, i32)* @sub to i8*), i8 1)
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
   store i32 (i32, i32)* null, i32 (i32, i32)** %9, align 8
-  %11 = load i8, i8* %4, align 1
-  %12 = sext i8 %11 to i32
-  %13 = icmp eq i32 %12, 43
-  br i1 %13, label %14, label %16
-
-14:                                               ; preds = %3
-  %15 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
-  store i32 (i32, i32)* %15, i32 (i32, i32)** %9, align 8
-  br label %23
+  %13 = load i8, i8* %4, align 1
+  %14 = sext i8 %13 to i32
+  %15 = icmp eq i32 %14, 43
+  br i1 %15, label %16, label %18
 
 16:                                               ; preds = %3
-  %17 = load i8, i8* %4, align 1
-  %18 = sext i8 %17 to i32
-  %19 = icmp eq i32 %18, 45
-  br i1 %19, label %20, label %22
+  %17 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
+  store i32 (i32, i32)* %17, i32 (i32, i32)** %9, align 8
+  br label %25
 
-20:                                               ; preds = %16
-  %21 = load i32 (i32, i32)*, i32 (i32, i32)** %8, align 8
-  store i32 (i32, i32)* %21, i32 (i32, i32)** %9, align 8
-  br label %22
+18:                                               ; preds = %3
+  %19 = load i8, i8* %4, align 1
+  %20 = sext i8 %19 to i32
+  %21 = icmp eq i32 %20, 45
+  br i1 %21, label %22, label %24
 
-22:                                               ; preds = %20, %16
-  br label %23
+22:                                               ; preds = %18
+  %23 = load i32 (i32, i32)*, i32 (i32, i32)** %8, align 8
+  store i32 (i32, i32)* %23, i32 (i32, i32)** %9, align 8
+  br label %24
 
-23:                                               ; preds = %22, %14
-  %24 = load i32, i32* %5, align 4
-  %25 = load i32, i32* %6, align 4
-  %26 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
-  %27 = load i32 (i32, i32)*, i32 (i32, i32)** %9, align 8
-  %28 = call i32 @foo(i32 %24, i32 %25, i32 (i32, i32)* %26, i32 (i32, i32)* %27)
-  store i32 %28, i32* %10, align 4
+24:                                               ; preds = %22, %18
+  br label %25
+
+25:                                               ; preds = %24, %16
+  %26 = load i32, i32* %5, align 4
+  %27 = load i32, i32* %6, align 4
+  %28 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
+  %29 = load i32 (i32, i32)*, i32 (i32, i32)** %9, align 8
+  %30 = call i32 @foo(i32 %26, i32 %27, i32 (i32, i32)* %28, i32 (i32, i32)* %29)
+  store i32 %30, i32* %10, align 4
   ret i32 0
 }
 

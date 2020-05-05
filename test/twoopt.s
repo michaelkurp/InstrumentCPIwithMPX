@@ -37,34 +37,25 @@ main:                                   # @main
 	movl	$0, -36(%rbp)
 	movabsq	$add, %rax
 	movq	%rax, -24(%rbp)
-	movl	$add, %eax
-	#APP
-	bndmk	1(%rax), %bnd0
-	#NO_APP
-	movabsq	$add, %rax
 	movq	%rax, -16(%rbp)
-	movl	$add, %eax
+	xorl	%eax, %eax
 	#APP
-	bndmk	1(%rax), %bnd1
+	movq	%rax, %rdx
+	#NO_APP
+	xorl	%eax, %eax
+	#APP
+	movq	%rax, %rdx
 	#NO_APP
 	movl	$1, -8(%rbp)
 	movl	$2, -4(%rbp)
 	movq	-24(%rbp), %rax
 	movl	-8(%rbp), %edi
 	movl	-4(%rbp), %esi
-	movl	$add, %ecx
-	#APP
-	bndcu	(%rcx), %bnd1
-	#NO_APP
 	callq	*%rax
 	movl	%eax, -32(%rbp)
 	movq	-16(%rbp), %rax
 	movl	-8(%rbp), %edi
 	movl	-4(%rbp), %esi
-	movl	$add, %ecx
-	#APP
-	bndcu	(%rcx), %bnd1
-	#NO_APP
 	callq	*%rax
 	movl	%eax, -28(%rbp)
 	xorl	%eax, %eax

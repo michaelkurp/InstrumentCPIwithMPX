@@ -39,42 +39,43 @@ define dso_local i32 @foo(i32) #0 {
   %7 = alloca i32, align 4
   %8 = alloca i32, align 4
   store i32 %0, i32* %2, align 4
+  %9 = bitcast i32 (i32, i32)** %3 to i8*
   store i32 (i32, i32)* @add, i32 (i32, i32)** %3, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (i32 (i32, i32)* @add to i8*), i8 0)
+  %10 = bitcast i32 (i32, i32)** %4 to i8*
   store i32 (i32, i32)* @sub, i32 (i32, i32)** %4, align 8
-  call void asm sideeffect "bndmk 1($0), %bnd1", "r"(i8* bitcast (i32 (i32, i32)* @sub to i8*), i8 1)
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
   store i32 (i32, i32)* null, i32 (i32, i32)** %5, align 8
   store i32 1, i32* %6, align 4
   store i32 2, i32* %7, align 4
-  %9 = load i32, i32* %2, align 4
-  %10 = icmp eq i32 %9, 3
-  br i1 %10, label %11, label %13
-
-11:                                               ; preds = %1
-  %12 = load i32 (i32, i32)*, i32 (i32, i32)** %3, align 8
-  store i32 (i32, i32)* %12, i32 (i32, i32)** %5, align 8
-  br label %15
+  %11 = load i32, i32* %2, align 4
+  %12 = icmp eq i32 %11, 3
+  br i1 %12, label %13, label %15
 
 13:                                               ; preds = %1
-  %14 = load i32 (i32, i32)*, i32 (i32, i32)** %4, align 8
+  %14 = load i32 (i32, i32)*, i32 (i32, i32)** %3, align 8
   store i32 (i32, i32)* %14, i32 (i32, i32)** %5, align 8
-  br label %15
+  br label %17
 
-15:                                               ; preds = %13, %11
-  %16 = load i32 (i32, i32)*, i32 (i32, i32)** %5, align 8
-  %17 = icmp ne i32 (i32, i32)* %16, null
-  br i1 %17, label %18, label %23
+15:                                               ; preds = %1
+  %16 = load i32 (i32, i32)*, i32 (i32, i32)** %4, align 8
+  store i32 (i32, i32)* %16, i32 (i32, i32)** %5, align 8
+  br label %17
 
-18:                                               ; preds = %15
-  %19 = load i32 (i32, i32)*, i32 (i32, i32)** %5, align 8
-  %20 = load i32, i32* %6, align 4
-  %21 = load i32, i32* %7, align 4
-  call void asm sideeffect "bndcu ($0), %bnd1", "r"(i16* bitcast (i32 (i32, i32)* @sub to i16*))
-  %22 = call i32 %19(i32 %20, i32 %21)
-  store i32 %22, i32* %8, align 4
-  br label %23
+17:                                               ; preds = %15, %13
+  %18 = load i32 (i32, i32)*, i32 (i32, i32)** %5, align 8
+  %19 = icmp ne i32 (i32, i32)* %18, null
+  br i1 %19, label %20, label %25
 
-23:                                               ; preds = %18, %15
+20:                                               ; preds = %17
+  %21 = load i32 (i32, i32)*, i32 (i32, i32)** %5, align 8
+  %22 = load i32, i32* %6, align 4
+  %23 = load i32, i32* %7, align 4
+  %24 = call i32 %21(i32 %22, i32 %23)
+  store i32 %24, i32* %8, align 4
+  br label %25
+
+25:                                               ; preds = %20, %17
   ret i32 0
 }
 

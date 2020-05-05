@@ -35,19 +35,12 @@ main:                                   # @main
 	subq	$16, %rsp
 	movabsq	$hello, %rax
 	movq	%rax, -8(%rbp)
-	movl	$hello, %eax
+	xorl	%eax, %eax
 	#APP
-	bndmk	1(%rax), %bnd0
-	#NO_APP
-	movq	-8(%rbp), %rcx
-	#APP
-	bndcl	(%rcx), %bnd0
-	#NO_APP
-	#APP
-	bndcu	(%rcx), %bnd0
+	movq	%rax, %rdx
 	#NO_APP
 	movb	$0, %al
-	callq	*%rcx
+	callq	*-8(%rbp)
 	xorl	%eax, %eax
 	addq	$16, %rsp
 	popq	%rbp
