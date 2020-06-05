@@ -13,9 +13,11 @@
 
 #include <map>
 #include <set>
+#include <vector>
 
 namespace CPIMPX {
 using namespace llvm;
+
 
 struct CPIFunctions {
   FunctionCallee CPIInit;
@@ -85,6 +87,7 @@ class CPI : public ModulePass {
   boundsInfo _BI;
   debugInfo _DI;
 
+  void preprocess(Module &);
   std::set<Value *> _call_list;
   std::map<StoreInst *, Function *> SItoFunc;
   std::map<Function *, StoreInst *> FuncToSI;
@@ -92,6 +95,9 @@ class CPI : public ModulePass {
   std::map<Function *, int> callNum;
   std::map<StoreInst *, AllocaInst *> SItoAll;
   std::map<CallInst *, LoadInst *> CalltoLoad;
+
+  std::map<StoreInst*, std::vector<Value*>> makeToCheck;
+
   LoadInst *currLoadInst = NULL;
 
   Function *getPhiNode(PHINode *);

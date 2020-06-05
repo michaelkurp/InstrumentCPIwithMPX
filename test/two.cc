@@ -13,7 +13,4 @@ int main()
   A *a = &b;
 
   return a->fct();
-
-// printf("%d", a->fct());
-//return 0;
 }

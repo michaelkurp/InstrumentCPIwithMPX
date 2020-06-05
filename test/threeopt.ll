@@ -3,128 +3,42 @@ source_filename = "three.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+@fcts2 = dso_local global [3 x i32 ()*] [i32 ()* @fct0, i32 ()* @fct1, i32 ()* @fct2], align 16
+@fcts = internal constant [3 x i32 ()*] [i32 ()* @fct0, i32 ()* @fct1, i32 ()* @fct2], align 16
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @__cpi__init.module, i8* null }]
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @add(i32, i32) #0 {
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  store i32 %0, i32* %3, align 4
-  store i32 %1, i32* %4, align 4
-  %5 = load i32, i32* %3, align 4
-  %6 = load i32, i32* %4, align 4
-  %7 = add nsw i32 %5, %6
-  ret i32 %7
-}
-
-; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @sub(i32, i32) #0 {
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  store i32 %0, i32* %3, align 4
-  store i32 %1, i32* %4, align 4
-  %5 = load i32, i32* %3, align 4
-  %6 = load i32, i32* %4, align 4
-  %7 = sub nsw i32 %5, %6
-  ret i32 %7
-}
-
-; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 (i32, i32)* @goo(i32, i32, i32 (i32, i32)*, i32 (i32, i32)*) #0 {
-  %5 = alloca i32, align 4
-  %6 = alloca i32, align 4
-  %7 = alloca i32 (i32, i32)*, align 8
-  %8 = alloca i32 (i32, i32)*, align 8
-  store i32 %0, i32* %5, align 4
-  store i32 %1, i32* %6, align 4
-  store i32 (i32, i32)* %2, i32 (i32, i32)** %7, align 8
-  store i32 (i32, i32)* %3, i32 (i32, i32)** %8, align 8
-  %9 = load i32 (i32, i32)*, i32 (i32, i32)** %8, align 8
-  ret i32 (i32, i32)* %9
-}
-
-; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @foo(i32, i32, i32 (i32, i32)*, i32 (i32, i32)*) #0 {
-  %5 = alloca i32, align 4
-  %6 = alloca i32, align 4
-  %7 = alloca i32 (i32, i32)*, align 8
-  %8 = alloca i32 (i32, i32)*, align 8
-  %9 = alloca i32 (i32, i32)*, align 8
-  store i32 %0, i32* %5, align 4
-  store i32 %1, i32* %6, align 4
-  store i32 (i32, i32)* %2, i32 (i32, i32)** %7, align 8
-  store i32 (i32, i32)* %3, i32 (i32, i32)** %8, align 8
-  %10 = load i32, i32* %5, align 4
-  %11 = load i32, i32* %6, align 4
-  %12 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
-  %13 = load i32 (i32, i32)*, i32 (i32, i32)** %8, align 8
-  %14 = call i32 (i32, i32)* @goo(i32 %10, i32 %11, i32 (i32, i32)* %12, i32 (i32, i32)* %13)
-  store i32 (i32, i32)* %14, i32 (i32, i32)** %9, align 8
-  %15 = load i32 (i32, i32)*, i32 (i32, i32)** %9, align 8
-  %16 = load i32, i32* %5, align 4
-  %17 = load i32, i32* %6, align 4
-  %18 = call i32 %15(i32 %16, i32 %17)
-  ret i32 %18
-}
-
-; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @moo(i8 signext, i32, i32) #0 {
-  %4 = alloca i8, align 1
-  %5 = alloca i32, align 4
-  %6 = alloca i32, align 4
-  %7 = alloca i32 (i32, i32)*, align 8
-  %8 = alloca i32 (i32, i32)*, align 8
-  %9 = alloca i32 (i32, i32)*, align 8
-  %10 = alloca i32, align 4
-  store i8 %0, i8* %4, align 1
-  store i32 %1, i32* %5, align 4
-  store i32 %2, i32* %6, align 4
-  %11 = bitcast i32 (i32, i32)** %7 to i8*
-  store i32 (i32, i32)* @add, i32 (i32, i32)** %7, align 8
-  %12 = bitcast i32 (i32, i32)** %8 to i8*
-  store i32 (i32, i32)* @sub, i32 (i32, i32)** %8, align 8
-  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
-  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
-  store i32 (i32, i32)* null, i32 (i32, i32)** %9, align 8
-  %13 = load i8, i8* %4, align 1
-  %14 = sext i8 %13 to i32
-  %15 = icmp eq i32 %14, 43
-  br i1 %15, label %16, label %18
-
-16:                                               ; preds = %3
-  %17 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
-  store i32 (i32, i32)* %17, i32 (i32, i32)** %9, align 8
-  br label %25
-
-18:                                               ; preds = %3
-  %19 = load i8, i8* %4, align 1
-  %20 = sext i8 %19 to i32
-  %21 = icmp eq i32 %20, 45
-  br i1 %21, label %22, label %24
-
-22:                                               ; preds = %18
-  %23 = load i32 (i32, i32)*, i32 (i32, i32)** %8, align 8
-  store i32 (i32, i32)* %23, i32 (i32, i32)** %9, align 8
-  br label %24
-
-24:                                               ; preds = %22, %18
-  br label %25
-
-25:                                               ; preds = %24, %16
-  %26 = load i32, i32* %5, align 4
-  %27 = load i32, i32* %6, align 4
-  %28 = load i32 (i32, i32)*, i32 (i32, i32)** %7, align 8
-  %29 = load i32 (i32, i32)*, i32 (i32, i32)** %9, align 8
-  %30 = call i32 @foo(i32 %26, i32 %27, i32 (i32, i32)* %28, i32 (i32, i32)* %29)
-  store i32 %30, i32* %10, align 4
+define dso_local i32 @fct0() #0 {
   ret i32 0
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @main() #0 {
-  %1 = alloca i32, align 4
-  store i32 0, i32* %1, align 4
-  ret i32 0
+define dso_local i32 @fct1() #0 {
+  ret i32 1
+}
+
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @fct2() #0 {
+  ret i32 2
+}
+
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main(i32, i8**) #0 {
+  %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
+  %5 = alloca i8**, align 8
+  %6 = alloca i32 ()*, align 8
+  store i32 0, i32* %3, align 4
+  store i32 %0, i32* %4, align 4
+  store i8** %1, i8*** %5, align 8
+  %7 = load i32, i32* %4, align 4
+  %8 = sext i32 %7 to i64
+  %9 = getelementptr inbounds [3 x i32 ()*], [3 x i32 ()*]* @fcts, i64 0, i64 %8
+  %10 = load i32 ()*, i32 ()** %9, align 8
+  store i32 ()* %10, i32 ()** %6, align 8
+  %11 = load i32 ()*, i32 ()** %6, align 8
+  %12 = call i32 %11()
+  ret i32 %12
 }
 
 declare void @__cpi__init()

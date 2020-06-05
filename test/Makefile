@@ -2,7 +2,7 @@ LLVM_ROOT=~/llvm
 LLVM_PASS_LOC=$(LLVM_ROOT)/build/lib/LLVMLab.so
 LLVM_PASS=-cpi
 
-all: one two three four five
+all: one two three four five seven
 
 one: one.c $(LLVM_PASS_LOC)
 	$(LLVM_ROOT)/build/bin/clang -c -emit-llvm one.c
@@ -13,7 +13,7 @@ one: one.c $(LLVM_PASS_LOC)
 	$(LLVM_ROOT)/build/bin/clang -o one oneopt.s hook.o
 
 two: two.c $(LLVM_PASS_LOC)
-	$(LLVM_ROOT)/build/bin/clang -c -emit-llvm two.c
+	$(LLVM_ROOT)/build/bin/clang++ -c -emit-llvm two.cc
 	$(LLVM_ROOT)/build/bin/opt -p -load $(LLVM_PASS_LOC) $(LLVM_PASS) < two.bc > twoopt.bc
 	$(LLVM_ROOT)/build/bin/llvm-dis twoopt.bc
 	$(LLVM_ROOT)/build/bin/llc twoopt.bc
@@ -44,5 +44,13 @@ five: five.c $(LLVM_PASS_LOC)
 	$(LLVM_ROOT)/build/bin/clang -c ../inc/hook.c
 	$(LLVM_ROOT)/build/bin/clang -o five fiveopt.s hook.o
 
+
+seven: seven.c $(LLVM_PASS_LOC)
+	$(LLVM_ROOT)/build/bin/clang -c -emit-llvm seven.c
+	$(LLVM_ROOT)/build/bin/opt -p -load $(LLVM_PASS_LOC) $(LLVM_PASS) < seven.bc > sevenopt.bc
+	$(LLVM_ROOT)/build/bin/llvm-dis sevenopt.bc
+	$(LLVM_ROOT)/build/bin/llc --debug-entry-values sevenopt.bc
+	$(LLVM_ROOT)/build/bin/clang -c ../inc/hook.c
+	$(LLVM_ROOT)/build/bin/clang -o seven sevenopt.s hook.o
 clean:
-	rm -f *.bc *.ll *.s one two three four five
+	rm -f *.bc *.ll *.s one two three four five seven

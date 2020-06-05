@@ -1,9 +1,9 @@
 	.text
 	.file	"three.c"
-	.globl	add                     # -- Begin function add
+	.globl	fct0                    # -- Begin function fct0
 	.p2align	4, 0x90
-	.type	add,@function
-add:                                    # @add
+	.type	fct0,@function
+fct0:                                   # @fct0
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -11,21 +11,18 @@ add:                                    # @add
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	movl	%edi, -8(%rbp)
-	movl	%esi, -4(%rbp)
-	movl	-8(%rbp), %eax
-	addl	-4(%rbp), %eax
+	xorl	%eax, %eax
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end0:
-	.size	add, .Lfunc_end0-add
+	.size	fct0, .Lfunc_end0-fct0
 	.cfi_endproc
                                         # -- End function
-	.globl	sub                     # -- Begin function sub
+	.globl	fct1                    # -- Begin function fct1
 	.p2align	4, 0x90
-	.type	sub,@function
-sub:                                    # @sub
+	.type	fct1,@function
+fct1:                                   # @fct1
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -33,21 +30,18 @@ sub:                                    # @sub
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	movl	%edi, -8(%rbp)
-	movl	%esi, -4(%rbp)
-	movl	-8(%rbp), %eax
-	subl	-4(%rbp), %eax
+	movl	$1, %eax
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end1:
-	.size	sub, .Lfunc_end1-sub
+	.size	fct1, .Lfunc_end1-fct1
 	.cfi_endproc
                                         # -- End function
-	.globl	goo                     # -- Begin function goo
+	.globl	fct2                    # -- Begin function fct2
 	.p2align	4, 0x90
-	.type	goo,@function
-goo:                                    # @goo
+	.type	fct2,@function
+fct2:                                   # @fct2
 	.cfi_startproc
 # %bb.0:
 	pushq	%rbp
@@ -55,110 +49,12 @@ goo:                                    # @goo
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	movl	%edi, -16(%rbp)
-	movl	%esi, -12(%rbp)
-	movq	%rdx, -24(%rbp)
-	movq	%rcx, -8(%rbp)
-	movq	-8(%rbp), %rax
+	movl	$2, %eax
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end2:
-	.size	goo, .Lfunc_end2-goo
-	.cfi_endproc
-                                        # -- End function
-	.globl	foo                     # -- Begin function foo
-	.p2align	4, 0x90
-	.type	foo,@function
-foo:                                    # @foo
-	.cfi_startproc
-# %bb.0:
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	subq	$32, %rsp
-	movl	%edi, -8(%rbp)
-	movl	%esi, -4(%rbp)
-	movq	%rdx, -32(%rbp)
-	movq	%rcx, -24(%rbp)
-	movl	-8(%rbp), %edi
-	movl	-4(%rbp), %esi
-	movq	-32(%rbp), %rdx
-	movq	-24(%rbp), %rcx
-	callq	goo
-	movq	%rax, -16(%rbp)
-	movq	-16(%rbp), %rax
-	movl	-8(%rbp), %edi
-	movl	-4(%rbp), %esi
-	callq	*%rax
-	addq	$32, %rsp
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
-	retq
-.Lfunc_end3:
-	.size	foo, .Lfunc_end3-foo
-	.cfi_endproc
-                                        # -- End function
-	.globl	moo                     # -- Begin function moo
-	.p2align	4, 0x90
-	.type	moo,@function
-moo:                                    # @moo
-	.cfi_startproc
-# %bb.0:
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	subq	$48, %rsp
-	movb	%dil, -1(%rbp)
-	movl	%esi, -24(%rbp)
-	movl	%edx, -20(%rbp)
-	movabsq	$add, %rax
-	movq	%rax, -32(%rbp)
-	movabsq	$sub, %rax
-	movq	%rax, -40(%rbp)
-	xorl	%eax, %eax
-	#APP
-	movq	%rax, %rdx
-	#NO_APP
-	xorl	%eax, %eax
-	#APP
-	movq	%rax, %rdx
-	#NO_APP
-	movq	$0, -16(%rbp)
-	movsbl	-1(%rbp), %eax
-	cmpl	$43, %eax
-	jne	.LBB4_2
-# %bb.1:
-	movq	-32(%rbp), %rax
-	movq	%rax, -16(%rbp)
-	jmp	.LBB4_5
-.LBB4_2:
-	movsbl	-1(%rbp), %eax
-	cmpl	$45, %eax
-	jne	.LBB4_4
-# %bb.3:
-	movq	-40(%rbp), %rax
-	movq	%rax, -16(%rbp)
-.LBB4_4:
-	jmp	.LBB4_5
-.LBB4_5:
-	movl	-24(%rbp), %edi
-	movl	-20(%rbp), %esi
-	movq	-32(%rbp), %rdx
-	movq	-16(%rbp), %rcx
-	callq	foo
-	movl	%eax, -44(%rbp)
-	xorl	%eax, %eax
-	addq	$48, %rsp
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
-	retq
-.Lfunc_end4:
-	.size	moo, .Lfunc_end4-moo
+	.size	fct2, .Lfunc_end2-fct2
 	.cfi_endproc
                                         # -- End function
 	.globl	main                    # -- Begin function main
@@ -172,13 +68,20 @@ main:                                   # @main
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
-	movl	$0, -4(%rbp)
-	xorl	%eax, %eax
+	subq	$32, %rsp
+	movl	$0, -20(%rbp)
+	movl	%edi, -4(%rbp)
+	movq	%rsi, -32(%rbp)
+	movslq	-4(%rbp), %rax
+	movq	fcts(,%rax,8), %rax
+	movq	%rax, -16(%rbp)
+	callq	*-16(%rbp)
+	addq	$32, %rsp
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
 	retq
-.Lfunc_end5:
-	.size	main, .Lfunc_end5-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 	.cfi_endproc
                                         # -- End function
 	.p2align	4, 0x90         # -- Begin function __cpi__init.module
@@ -192,10 +95,29 @@ __cpi__init.module:                     # @__cpi__init.module
 	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
-.Lfunc_end6:
-	.size	__cpi__init.module, .Lfunc_end6-__cpi__init.module
+.Lfunc_end4:
+	.size	__cpi__init.module, .Lfunc_end4-__cpi__init.module
 	.cfi_endproc
                                         # -- End function
+	.type	fcts2,@object           # @fcts2
+	.data
+	.globl	fcts2
+	.p2align	4
+fcts2:
+	.quad	fct0
+	.quad	fct1
+	.quad	fct2
+	.size	fcts2, 24
+
+	.type	fcts,@object            # @fcts
+	.section	.rodata,"a",@progbits
+	.p2align	4
+fcts:
+	.quad	fct0
+	.quad	fct1
+	.quad	fct2
+	.size	fcts, 24
+
 	.section	.init_array.0,"aw",@init_array
 	.p2align	3
 	.quad	__cpi__init.module

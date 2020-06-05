@@ -26,6 +26,7 @@
 #include "llvm/PassSupport.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include "llvm/IR/CFG.h"
 
 #include <iostream>
 #include <map>
@@ -37,6 +38,41 @@
 using namespace std;
 using namespace llvm;
 using namespace CPIMPX;
+
+bool canReach(BasicBlock* source, BasicBlock* dest)
+{
+  SmallVector<BasicBlock*, 32> Worklist;
+  Worklist.push_back(const_cast<BasicBlock*>(source));
+  unsigned Limit = 32;
+  SmallPtrSet<const BasicBlock*, 32> Visisted;
+  do {
+    BasicBlock* BB = Worklist.pop_back_val();
+    if(!Visisted.insert(BB).second)
+      continue;
+    if(BB == dest)
+      return true;
+    if(!--Limit)
+      return true;
+    else
+      Worklist.append(succ_begin(BB), succ_end(BB));
+  } while(!Worklist.empty());
+  return false;
+}
+std::map<BasicBlock*, std::vector<BasicBlock*> > preprocessReach(Function& F){
+  std::map<BasicBlock*, std::vector<BasicBlock*> > possible;
+  for(auto &BB : F){
+    BasicBlock* bb = &BB;
+    std::vector<BasicBlock*> temp;
+    for(auto &qq : F){
+      BasicBlock* tempBB = &qq;
+      if(canReach(bb, tempBB))
+        temp.push_back(tempBB);
+    }
+    possible[bb] = temp;
+  }
+  return possible;
+}
+
 
 static void initCPIFunctions(const DataLayout *DL, Module &M,
                              CPIFunctions &CF) {
@@ -298,14 +334,17 @@ void CPI::insertBndStx(StoreInst *SI, int priority) {
   IRB.CreateCall(ckBound, {ptrOpAsVoidPtr});
 }
 
-Function *CPI::getGetElementPtrInst(GetElementPtrInst *getElementPtrInst) {
-  Value *v = getElementPtrInst->getOperand(0);
+Function *CPI::getGetElementPtrInst(GetElementPtrInst *GEP) {
+  Value *v = GEP->getOperand(0);
+
   for (auto *U : v->users()) {
     if (GetElementPtrInst *GPI = dyn_cast<GetElementPtrInst>(U)) {
 
       for (auto *UL : GPI->users()) {
         if (StoreInst *SI = dyn_cast<StoreInst>(UL)) {
-
+          ConstantInt *temp1 = ConstantInt::get(Type::getInt32Ty(SI->getContext()), 2);
+          Instruction *temp = BinaryOperator::Create(
+          Instruction::Add, temp1, temp1, "", SI);
           Value *v = SI->getOperand(0)->stripPointerCasts();
           if (Function *func = dyn_cast<Function>(v)) {
 
@@ -350,6 +389,7 @@ Function *CPI::getCallInst(CallInst *CI) {
 }
 
 Function *CPI::getLoadInst(LoadInst *LI) {
+
   Value *v = LI->getPointerOperand();
   if (AllocaInst *all = dyn_cast<AllocaInst>(v))
     currLoadInst = LI;
@@ -375,6 +415,7 @@ Function *CPI::getLoadInst(LoadInst *LI) {
   return nullptr;
 }
 Function *CPI::getFunc(CallInst *callInst) {
+
   Value *funcptr = callInst->getCalledValue();
 
   if (LoadInst *LI = dyn_cast<LoadInst>(funcptr)) {
@@ -426,6 +467,8 @@ bool CPI::runOnFunction(Function &F) {
         FunctionType *type = call->getFunctionType();
 
         if (func == NULL) {
+
+
           if (Function *temp = getFunc(call)) {
             _BI.needsChecks.insert(call);
             callToFunc[call] = temp;
@@ -447,40 +490,60 @@ bool CPI::runOnFunction(Function &F) {
   return true;
 }
 
-struct CompareReg {
-  bool operator()(std::pair<Function *, int> const &p1,
-                  std::pair<Function *, int> const &p2) {
-    return p1.second < p2.second;
-  }
-};
+
 void CPI::instrumentDaStuff() {
-  std::map<Function *, int> funcToReg;
-  int regCounter = 0;
+  std::map<StoreInst*, int> reg;
+  int count = 0;
   for (auto sup : _BI.needsBounds) {
-    Function *temp = SItoFunc[sup];
-    int regNum = regCounter % 4;
-    insertBndMk(sup, regNum);
-    insertBndStx(sup, regNum);
-    /*
-    int regNum = _RI.returnFirstFreeReg();
-    if (regNum == 42) {
-      // ToDO
-    } else {
-      insertBndMk(sup, regNum);
-      insertBndStx(sup, regNum);
-    }
-    */
-    funcToReg[temp] = regNum;
-    regCounter++;
+    //std::vector<Value*> emptyVec;
+    //makeToCheck[sup] = emptyVec;
+    insertBndMk(sup, count % 4);
+    insertBndStx(sup, count % 4);
+    reg[sup] = count;
+    count++;
   }
   for (auto sup : _BI.needsChecks) {
-    Function *temp = callToFunc[sup];
-    int Reg = funcToReg[callToFunc[sup]];
+    Function* temp = callToFunc[sup];
     StoreInst *check = FuncToSI[temp];
-    insertBndldx(sup, Reg);
-    insertBndcl(check, sup, Reg);
-    insertBndcu(check, sup, Reg);
+    int regNum = reg[check];
+    insertBndldx(sup, regNum % 4);
+    insertBndcl(check, sup, regNum % 4);
+    insertBndcu(check, sup, regNum % 4);
+
+    //makeToCheck[check].push_back(sup);
   }
+  /*
+  auto it = makeToCheck.begin();
+  int quickCount = 0;
+  while(it != makeToCheck.end())
+  {
+    StoreInst* makeBounds = it->first;
+    std::vector<Value*> checkBounds = it->second;
+
+    BasicBlock* start = makeBounds->getParent();
+    std::vector<BasicBlock*> ptrUses;
+    for(auto* a : checkBounds){
+      if(Instruction* inst = dyn_cast<Instruction>(a))
+        ptrUses.push_back(inst->getParent());
+    }
+
+
+    insertBndMk(makeBounds, quickCount);
+    insertBndStx(makeBounds, quickCount);
+
+    for(auto* a : checkBounds)
+    {
+      if(CallInst* CI = dyn_cast<CallInst>(a))
+      {
+        insertBndldx(CI, quickCount);
+        insertBndcl(makeBounds, CI, quickCount);
+        insertBndcu(makeBounds, CI, quickCount);
+      }
+    }
+    quickCount = (quickCount + 1) % 4;
+    it++;
+  }
+  */
 }
 bool CPI::runOnModule(Module &M) {
   LLVMContext &C = M.getContext();
@@ -490,22 +553,35 @@ bool CPI::runOnModule(Module &M) {
 
   Function *cpiInitfunc = createGlobalsReload(M, "__cpi__init.module");
   appendToGlobalCtors(M, cpiInitfunc, 0);
+  for (auto it = M.global_begin(); it != M.global_end(); ++it){
+    GlobalVariable* gv = &*it;
+    if(Value* v = dyn_cast<Value>(gv)){
+      if(v->getType()->isPointerTy()){
+        auto thing = ConstantInt::get(Type::getInt64Ty(v->getContext()), 10);
+        new GlobalVariable(M,
+                            Type::getInt64Ty(v->getContext()),
+                         true,
+                         GlobalValue::ExternalLinkage,
+                         NULL,
+                         "halpme");
+      }
+      else if(v->getType()->isArrayTy()){
 
+      }
+      else if(v->getType()->isStructTy()){
+
+      }
+    }
+
+
+  }
   for (Module::iterator it = M.begin(); it != M.end(); ++it) {
     Function &F = *it;
     // DominatorTree DT = DominatorTree(F);
     runOnFunction(F);
   }
   instrumentDaStuff();
-  /*
-  for (auto *instrumentMe : _call_list) {
-    if (Function *func = dyn_cast<Function>(instrumentMe)) {
-      ConstantInt *temp1 = ConstantInt::get(Type::getInt32Ty(C), 2);
-      Instruction *temp = BinaryOperator::Create(
-          Instruction::Add, temp1, temp1, "", &(func->getEntryBlock()));
-    }
-  }
-  */
+
   return true;
 }
 char CPI::ID = 0;

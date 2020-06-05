@@ -34,13 +34,38 @@ main:                                   # @main
 	.cfi_def_cfa_register %rbp
 	subq	$16, %rsp
 	movabsq	$hello, %rax
+	leaq	-16(%rbp), %rcx
+	addq	$8, %rcx
 	movq	%rax, -8(%rbp)
+	movl	$hello, %eax
+	#APP
+	bndmk	1(%rax), %bnd0
+	#NO_APP
 	xorl	%eax, %eax
 	#APP
 	movq	%rax, %rdx
 	#NO_APP
+	#APP
+	bndstx	%bnd0, (%rcx,%rdx)
+	#NO_APP
+	leaq	-16(%rbp), %rax
+	addq	$8, %rax
+	movq	-8(%rbp), %rcx
+	xorl	%edx, %edx
+	#APP
+	movq	%rdx, %rdx
+	#NO_APP
+	#APP
+	bndldx	(%rax,%rdx), %bnd0
+	#NO_APP
+	#APP
+	bndcl	(%rcx), %bnd0
+	#NO_APP
+	#APP
+	bndcu	(%rcx), %bnd0
+	#NO_APP
 	movb	$0, %al
-	callq	*-8(%rbp)
+	callq	*%rcx
 	xorl	%eax, %eax
 	addq	$16, %rsp
 	popq	%rbp

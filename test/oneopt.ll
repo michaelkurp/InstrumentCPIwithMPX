@@ -20,12 +20,22 @@ declare dso_local i32 @printf(i8*, ...) #1
 define dso_local i32 @main() #0 {
   %1 = alloca %struct.test, align 8
   %2 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
-  %3 = bitcast void (...)** %2 to i8*
+  %3 = add i32 2, 2
+  %4 = bitcast void (...)** %2 to i8*
   store void (...)* bitcast (void ()* @hello to void (...)*), void (...)** %2, align 8
-  %4 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
+  call void asm sideeffect "bndmk 1($0), %bnd0", "r"(i8* bitcast (void ()* @hello to i8*), i8 0)
   call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
-  %5 = load void (...)*, void (...)** %4, align 8
-  call void (...) %5()
+  call void asm sideeffect "bndstx %bnd0, ($0, %rdx, 1)", "r"(i8* %4)
+  %5 = getelementptr inbounds %struct.test, %struct.test* %1, i32 0, i32 1
+  %6 = load void (...)*, void (...)** %5, align 8
+  %7 = bitcast void (...)** %5 to i8*
+  call void asm sideeffect "movq $0, %rdx", "r"(i64 0)
+  call void asm sideeffect "bndldx ($0, %rdx, 1), %bnd0", "r"(i8* %7)
+  %8 = bitcast void (...)* %6 to i64*
+  call void asm sideeffect "bndcl ($0), %bnd0", "r"(i64* %8)
+  %9 = bitcast void (...)* %6 to i64*
+  call void asm sideeffect "bndcu ($0), %bnd0", "r"(i64* %9)
+  call void (...) %6()
   ret i32 0
 }
 
